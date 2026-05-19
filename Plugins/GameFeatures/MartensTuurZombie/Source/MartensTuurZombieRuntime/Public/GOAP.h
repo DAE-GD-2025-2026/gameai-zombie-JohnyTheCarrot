@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+#include <memory>
 
 enum class EDesiredStateValue : uint8
 {
@@ -6,6 +8,8 @@ enum class EDesiredStateValue : uint8
 	False,
 	True,
 };
+
+void ApplyDesiredState(bool& Val, EDesiredStateValue Desired);
 
 [[nodiscard]]
 bool operator==(bool Value, EDesiredStateValue Desired);
@@ -41,7 +45,21 @@ struct FState final
 	[[nodiscard]]
 	bool operator==(FState<OtherValueType> const &Other)
 	{
-		return HasWeapon == Other.HasWeapon;
+		return HasWeapon == Other.HasWeapon
+			&& HasFoundWeapon == Other.HasFoundWeapon
+			&& EnemyIsVisible == Other.EnemyIsVisible
+		;
+	}
+	
+	template<typename OtherValueType>
+	[[nodiscard]]
+	FState<>& operator=(FState<OtherValueType> const &Other)
+	{
+		ApplyDesiredState(HasWeapon, Other.HasWeapon);
+		ApplyDesiredState(HasFoundWeapon, Other.HasFoundWeapon);
+		ApplyDesiredState(EnemyIsVisible, Other.EnemyIsVisible);
+		
+		return *this;
 	}
 };
 
@@ -54,7 +72,6 @@ struct FGoapBlackboard final
 };
 
 using GoapPriority = float;
-constexpr GoapPriority GoapUnnecessary{0.f};
 
 class FGoal
 {
@@ -65,23 +82,57 @@ public:
 	virtual FDesiredState GetDesiredState() const = 0;
 	
 	[[nodiscard]]
-	bool ArePreconditionsMet(FState<> const &State) const;
-	
-	[[nodiscard]]
 	virtual GoapPriority MeasurePriority(FState<> const &State, FGoapBlackboard const &Blackboard) const = 0;
 };
 
-class FGoalKillEnemy final : public FGoal
+class FGoalIsSafe final : public FGoal
 {
 public:
 	virtual GoapPriority MeasurePriority(FState<> const &State, FGoapBlackboard const& Blackboard) const override;
 	[[nodiscard]] virtual FDesiredState GetDesiredState() const override;
 };
 
-class FGoalGetWeapon final : public FGoal
+class FGoalExplore final : public FGoal
 {
 public:
 	[[nodiscard]] virtual GoapPriority
 	MeasurePriority(const FState<>& State, const FGoapBlackboard& Blackboard) const override;
 	[[nodiscard]] virtual FDesiredState GetDesiredState() const override;
+};
+
+class FAction 
+{
+public:
+	virtual ~FAction() = default;
+	
+	[[nodiscard]]
+	virtual FDesiredState GetRequiredState() const = 0;
+	
+	[[nodiscard]]
+	virtual FDesiredState GetResultingState() const = 0;
+	
+	[[nodiscard]]
+	bool ArePreconditionsMet(FState<> const &State) const;
+	
+	[[nodiscard]]
+	virtual float GetCost() const = 0;
+};
+
+class FActionFindWeapon final : public FAction
+{
+public:
+	[[nodiscard]] virtual FDesiredState GetRequiredState() const override;
+	[[nodiscard]] virtual FDesiredState GetResultingState() const override;
+	
+	virtual float GetCost() const override;
+};
+
+class FGoalPlanner final
+{
+	std::vector<std::unique_ptr<FGoal>> Goals;
+	
+public:
+	explicit FGoalPlanner(std::vector<std::unique_ptr<FGoal>> GoalsIn)
+		: Goals{std::move(GoalsIn)}
+	{}
 };
