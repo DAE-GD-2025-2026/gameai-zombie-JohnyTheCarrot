@@ -1,138 +1,121 @@
 #pragma once
-#include <vector>
 #include <memory>
 
-enum class EDesiredStateValue : uint8
+#include "AIController.h"
+
+enum class EGOAPState : uint8
 {
-	Indifferent,
-	False,
-	True,
+	HasWeapon,
+	HasFood,
+	SeesEnemy,
 };
 
-void ApplyDesiredState(bool& Val, EDesiredStateValue Desired);
-
-[[nodiscard]]
-bool operator==(bool Value, EDesiredStateValue Desired);
-
-[[nodiscard]]
-inline bool operator!=(bool Value, EDesiredStateValue Desired)
+class FWorldState final
 {
-	return !(Value == Desired);
-}
-
-[[nodiscard]]
-inline bool operator==(EDesiredStateValue Desired, bool Value)
-{
-	return Value == Desired;
-}
-
-[[nodiscard]]
-inline bool operator!=(EDesiredStateValue Desired, bool Value)
-{
-	return Value != Desired;
-}
-
-static_assert(EDesiredStateValue{} == EDesiredStateValue::Indifferent);
-
-template<typename ValueType = bool>
-struct FState final
-{
-	ValueType HasWeapon{};
-	ValueType HasFoundWeapon{};
-	ValueType EnemyIsVisible{};
+	TMap<EGOAPState, bool> StateValues{};
 	
-	template<typename OtherValueType>
+public:
 	[[nodiscard]]
-	bool operator==(FState<OtherValueType> const &Other)
+	bool Get(EGOAPState Key) const
 	{
-		return HasWeapon == Other.HasWeapon
-			&& HasFoundWeapon == Other.HasFoundWeapon
-			&& EnemyIsVisible == Other.EnemyIsVisible
-		;
+		// keys that aren't found will return default of bool, i.e. false. this is acceptable behavior
+		return StateValues.FindRef(Key);
 	}
 	
-	template<typename OtherValueType>
-	[[nodiscard]]
-	FState<>& operator=(FState<OtherValueType> const &Other)
+	void Set(EGOAPState Key, bool Value)
 	{
-		ApplyDesiredState(HasWeapon, Other.HasWeapon);
-		ApplyDesiredState(HasFoundWeapon, Other.HasFoundWeapon);
-		ApplyDesiredState(EnemyIsVisible, Other.EnemyIsVisible);
-		
-		return *this;
+		StateValues.Add(Key, Value);
 	}
 };
 
-using FDesiredState = FState<EDesiredStateValue>;
-
-struct FGoapBlackboard final
+USTRUCT(BlueprintType)
+struct FCondition final
 {
-	int Health{};
-	TOptional<float> DistanceToEnemy{};
-};
-
-using GoapPriority = float;
-
-class FGoal
-{
-public:
-	virtual ~FGoal() = default;
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly)
+	EGOAPState StateKey{};
+	
+	UPROPERTY(EditDefaultsOnly)
+	bool DesiredValue{};
 	
 	[[nodiscard]]
-	virtual FDesiredState GetDesiredState() const = 0;
-	
-	[[nodiscard]]
-	virtual GoapPriority MeasurePriority(FState<> const &State, FGoapBlackboard const &Blackboard) const = 0;
+	bool DoesWorldStateConform(FWorldState const &State) const
+	{
+		return State.Get(StateKey) == DesiredValue;
+	}
 };
 
-class FGoalIsSafe final : public FGoal
+USTRUCT(BlueprintType)
+struct FGoal final
 {
-public:
-	virtual GoapPriority MeasurePriority(FState<> const &State, FGoapBlackboard const& Blackboard) const override;
-	[[nodiscard]] virtual FDesiredState GetDesiredState() const override;
-};
-
-class FGoalExplore final : public FGoal
-{
-public:
-	[[nodiscard]] virtual GoapPriority
-	MeasurePriority(const FState<>& State, const FGoapBlackboard& Blackboard) const override;
-	[[nodiscard]] virtual FDesiredState GetDesiredState() const override;
-};
-
-class FAction 
-{
-public:
-	virtual ~FAction() = default;
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	TArray<FCondition> Conditions;
 	
 	[[nodiscard]]
-	virtual FDesiredState GetRequiredState() const = 0;
-	
-	[[nodiscard]]
-	virtual FDesiredState GetResultingState() const = 0;
-	
-	[[nodiscard]]
-	bool ArePreconditionsMet(FState<> const &State) const;
-	
-	[[nodiscard]]
-	virtual float GetCost() const = 0;
+	// The lower the return value, the closer we adhere to the desired world state (i.e. the conditions).
+	// The higher, the less we adhere, so the less content we are.
+	// 0 to 1, 1 being least content
+	// TODO: probably the heuristic score in A*?
+	float GetDiscontentmentScore(FWorldState const &State) const;
 };
 
-class FActionFindWeapon final : public FAction
+USTRUCT(BlueprintType)
+struct FEffect final
 {
-public:
-	[[nodiscard]] virtual FDesiredState GetRequiredState() const override;
-	[[nodiscard]] virtual FDesiredState GetResultingState() const override;
+	GENERATED_BODY()
 	
-	virtual float GetCost() const override;
+	UPROPERTY(EditDefaultsOnly)
+	EGOAPState StateKey{};
+	
+	UPROPERTY(EditDefaultsOnly)
+	bool Value{};
+	
+	void Apply(FWorldState &State) const
+	{
+		State.Set(StateKey, Value);
+	}
 };
 
-class FGoalPlanner final
+UCLASS(Blueprintable, Abstract)
+class UGOAPActionExecutor : public UObject
 {
-	std::vector<std::unique_ptr<FGoal>> Goals;
+	GENERATED_BODY()
 	
 public:
-	explicit FGoalPlanner(std::vector<std::unique_ptr<FGoal>> GoalsIn)
-		: Goals{std::move(GoalsIn)}
-	{}
+	UFUNCTION(BlueprintNativeEvent)
+	void Begin(AAIController *Controller);
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void Tick(float DeltaTime);
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void Abort();
+};
+
+UCLASS(BlueprintType)
+class UGOAPActionAsset : public UPrimaryDataAsset
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY(EditDefaultsOnly)
+	FName Name;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FCondition> Preconditions;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FEffect> Effects;
+	
+	UPROPERTY(EditDefaultsOnly)
+	float BaseCost = 1.f;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGOAPActionExecutor> ExecutorClass;
+	
+	[[nodiscard]]
+	FWorldState SimulateApplication(FWorldState const &Current) const;
 };
