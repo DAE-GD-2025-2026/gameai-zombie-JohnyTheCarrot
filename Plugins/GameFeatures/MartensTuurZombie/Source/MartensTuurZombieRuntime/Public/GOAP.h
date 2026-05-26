@@ -2,12 +2,17 @@
 #include <memory>
 
 #include "AIController.h"
+#include "GOAP.generated.h"
 
+UENUM()
 enum class EGOAPState : uint8
 {
 	HasWeapon = 1 << 0u,
 	HasFood = 1 << 1u,
 	SeesEnemy = 1 << 2u,
+	// TODO: if we don't already know where one is, searching has an unknown cost.. what do
+	HasFoundWeapon = 1 << 3u,
+	HasFoundHouse = 1 << 4u,
 };
 
 class FWorldState final
@@ -31,6 +36,27 @@ public:
 			State |= Bit;
 		else
 			State &= ~Bit;
+	}
+	
+	[[nodiscard]]
+	Underlying GetBitField() const
+	{
+		return State;
+	}
+	
+	[[nodiscard]]
+	bool operator==(FWorldState const &Other) const
+	{
+		return State == Other.State;
+	}
+};
+
+template<>
+struct std::hash<FWorldState> : std::hash<std::underlying_type_t<EGOAPState>>
+{
+	std::size_t operator()(FWorldState const &State) const
+	{
+		return std::hash<std::underlying_type_t<EGOAPState>>{}(State.GetBitField());
 	}
 };
 
@@ -88,7 +114,7 @@ struct FEffect final
 	}
 };
 
-UCLASS(Blueprintable, Abstract)
+UCLASS(Blueprintable)
 class UGOAPActionExecutor : public UObject
 {
 	GENERATED_BODY()

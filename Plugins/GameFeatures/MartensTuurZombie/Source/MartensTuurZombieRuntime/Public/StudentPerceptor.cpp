@@ -13,9 +13,10 @@ void UStudentPerceptor::RefreshSurvivorState()
 	
 	for (auto const &Item : KnownItems)
 	{
-		if (Item.Type == EItemType::Pistol || Item.Type == EItemType::Shotgun) SurvivorState.HasFoundWeapon = true;
+		if (Item.Type == EItemType::Pistol || Item.Type == EItemType::Shotgun)
+			SurvivorState.Set(EGOAPState::HasFoundWeapon, true);
 	}
-	SurvivorState.HasFoundHouse = !KnownHouses.IsEmpty();
+	SurvivorState.Set(EGOAPState::HasFoundHouse, !KnownHouses.IsEmpty());
 }
 
 UStudentPerceptor::UStudentPerceptor()
