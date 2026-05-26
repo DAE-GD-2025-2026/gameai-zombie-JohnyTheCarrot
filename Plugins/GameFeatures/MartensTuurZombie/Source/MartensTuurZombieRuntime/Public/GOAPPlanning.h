@@ -23,32 +23,24 @@ namespace GOAP
 		float GetCost(FWorldState const &State) const;
 	};
 	
-	class FGOAPGraph final
+	UCLASS()
+	class MARTENSTUURZOMBIERUNTIME_API UGoapGraph final : public UActorComponent
 	{
+		GENERATED_BODY()
+		
 		using StateToActionsMap = TMultiMap<EGOAPState, TObjectPtr<UGOAPActionAsset>>;
 		StateToActionsMap DesiredStateByQualifyingActions;
 		TArray<FGoapGraphConnection> Connections;
 		
 	public:
-		explicit FGOAPGraph(TArray<TObjectPtr<UGOAPActionAsset>> const &Actions);
+		UPROPERTY(EditDefaultsOnly)
+		TArray<TObjectPtr<UGOAPActionAsset>> AvailableActions;
+		
+		explicit UGoapGraph(TArray<TObjectPtr<UGOAPActionAsset>> const &Actions);
 		
 		using GoapPlan = TArray<TObjectPtr<UGOAPActionAsset>>;
 		
 		[[nodiscard]]
 		GoapPlan Plan(FWorldState const &StartState, FGoal const &Goal) const;
-	};
-	
-	UCLASS()
-	class MARTENSTUURZOMBIERUNTIME_API UGOAPActionPlanner : public UActorComponent
-	{
-		GENERATED_BODY()
-		
-	public:
-		UPROPERTY(EditDefaultsOnly)
-		TArray<TObjectPtr<UGOAPActionAsset>> AvailableActions;
-		
-		FGOAPGraph Graph;
-		
-		virtual void BeginPlay() override;
 	};
 }

@@ -2,15 +2,25 @@
 
 float FGoal::GetDiscontentmentScore(FWorldState const& State) const
 {
-	float Contentment = 0.f;
+	float Discontentment = 0.f;
 	for (auto const &[StateKey, Value] : Conditions)
 	{
-		if (State.Get(StateKey) == Value)
-			Contentment += 1.f;
+		if (State.Get(StateKey) != Value)
+			Discontentment += 1.f;
 	}
 	
-	auto const NumConditions = static_cast<float>(Conditions.Num());
-	return 1.f - Contentment / NumConditions;
+	return Discontentment;
+}
+
+bool FGoal::IsSatisfied(FWorldState const& State) const
+{
+	for (auto const &[StateKey, Value] : Conditions)
+	{
+		if (State.Get(StateKey) != Value)
+			return false;
+	}
+	
+	return true;
 }
 
 FWorldState UGOAPActionAsset::SimulateApplication(FWorldState const& Current) const
@@ -23,4 +33,14 @@ FWorldState UGOAPActionAsset::SimulateApplication(FWorldState const& Current) co
 	}
 	
 	return Result;
+}
+
+bool UGOAPActionAsset::CanExecute(FWorldState const& State) const
+{
+	for (auto const [ConditionKey, ConditionValue] : Preconditions)
+	{
+		if (State.Get(ConditionKey) != ConditionValue) return false;
+	}
+	
+	return true;
 }

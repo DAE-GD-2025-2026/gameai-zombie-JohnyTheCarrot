@@ -1,5 +1,5 @@
 #include "GOAPPlanning.h"
-#include <span>
+#include <utility>
 #include <queue>
 #include <unordered_set>
 
@@ -9,8 +9,36 @@ namespace GOAP
 	{
 		TObjectPtr<UGOAPActionAsset> Action;
 		
-		float CostFromStart = 0.f;
+		FWorldState State;
+		
+		float CostFromStart{0.f};
 		float HeuristicCost;
+		
+		FNode(TObjectPtr<UGOAPActionAsset> ActionIn, FWorldState const &StateIn, float CostIn, FGoal const &Goal)
+			: Action{ActionIn}
+			, State{Action->SimulateApplication(StateIn)}
+			, CostFromStart{CostIn}
+			, HeuristicCost{Goal.GetDiscontentmentScore(State)} {}
+		
+		FNode(FWorldState const &StartState, FGoal const &Goal)
+			: Action{nullptr}
+			, State{StartState}
+			, HeuristicCost{Goal.GetDiscontentmentScore(State)}
+		{}
+		
+		[[nodiscard]]
+		TArray<FCondition> const &GetConditions() const
+		{
+			if (Action == nullptr)
+			{
+				// fix dangling ref
+				static const TArray<FCondition> EmptyConditions;
+				// start node
+				return EmptyConditions;
+			}
+			
+			return Action->Preconditions;
+		}
 		
 		[[nodiscard]]
 		float GetCost() const
@@ -18,9 +46,9 @@ namespace GOAP
 			return CostFromStart + HeuristicCost;
 		}
 		
-		auto operator<=>(const FNode& other) const
+		auto operator<=>(const FNode& Other) const
 		{
-			return HeuristicCost <=> other.HeuristicCost;
+			return GetCost() <=> Other.GetCost();
 		}
 	};
 	
@@ -37,7 +65,7 @@ namespace GOAP
 		return To->BaseCost;
 	}
 
-	FGOAPGraph::FGOAPGraph(TArray<TObjectPtr<UGOAPActionAsset>> const& Actions)
+	UGoapGraph::UGoapGraph(TArray<TObjectPtr<UGOAPActionAsset>> const& Actions)
 		: DesiredStateByQualifyingActions{[&Actions] -> StateToActionsMap
 		{
 			StateToActionsMap Map{};
@@ -55,76 +83,45 @@ namespace GOAP
 		}()} {
 	}
 
-	FGOAPGraph::GoapPlan FGOAPGraph::Plan(FWorldState const& StartState, FGoal const& Goal) const
+	UGoapGraph::GoapPlan UGoapGraph::Plan(FWorldState const& StartState, FGoal const& Goal) const
 	{
-		// Priority queue doesn't support random access, meaning I can't check whether a given element is already in it ...
-		std::priority_queue<FNode, std::vector<FNode>, std::greater<FNode>> OpenQueue;
-		// ... that's why we have an open set, which enables dupe checking.
-		std::unordered_set<GoapGraphNode> OpenSet;
+		FNode const StartNode{
+			StartState,
+			Goal
+		};
+		std::priority_queue<FNode, std::vector<FNode>, std::greater<FNode>> OpenQueue{};
+		OpenQueue.emplace(StartNode);
 		
-		std::unordered_set<GoapGraphNode> ClosedSet;
-		
-		std::unordered_map<GoapGraphNode, GoapGraphNode> CameFrom;
-		std::unordered_map<GoapGraphNode, float> GScores;
-		std::unordered_map<GoapGraphNode, float> FScores;
-		
-		FWorldState CurrentState{StartState};
-		float CostSoFar = 0.f;
-		
-		auto const Heuristic = [&Goal, &CurrentState](GoapGraphNode const &Node)
+		struct FCameFrom final
 		{
-			return Goal.GetDiscontentmentScore(Node->SimulateApplication(CurrentState));
+			FWorldState PreviousState;
+			UGOAPActionAsset* Action;
 		};
 		
-		auto const AddToOpenList = [this, CostSoFar, &Heuristic, &OpenQueue, &Goal, &CurrentState](TArray<FCondition> const& Conditions)
-		{
-			for (auto const &Condition : Conditions)
-			{
-				TArray<TObjectPtr<UGOAPActionAsset>> QualifyingActions;
-				DesiredStateByQualifyingActions.MultiFind(Condition.StateKey, QualifyingActions);
-			
-				for (auto const Action : QualifyingActions)
-				{
-					OpenQueue.emplace(
-						Action,
-						CostSoFar + Action->BaseCost,
-						Heuristic(Action)
-					);
-				}
-			}
-		};
+		std::unordered_map<FWorldState, FCameFrom> CameFromAction;
+		std::unordered_map<FWorldState, float> GScores;
+		GScores[StartState] = 0.f;
 		
-		auto const GetCostScore = [](std::unordered_map<GoapGraphNode, float> const &Scores, GoapGraphNode const& Node) -> float
-		{
-			if (auto const It = Scores.find(Node); It != Scores.end())
-				return It->second;
-			
-			return std::numeric_limits<float>::max();
-		};
-		
-		// get qualifying actions for goal, add them to OpenList
-		AddToOpenList(Goal.Conditions);
-		
-		TArray<FCondition> TotalConditions{Goal.Conditions};
 		while (!OpenQueue.empty())
 		{
 			auto const Current = OpenQueue.top();
-			ClosedSet.emplace(Current.Action);
+			OpenQueue.pop();
 			
-			auto const ResultingState = Current.Action->SimulateApplication(CurrentState);
+			// if (ClosedSet.contains(Current.State))
+			// 	continue;
 			
-			if (Goal.GetDiscontentmentScore(ResultingState) == 0.f)
+			if (Goal.IsSatisfied(Current.State))
 			{
-				// TODO: we are done, we have reached the goal!
+				// We are done, we have reached the goal!
 				GoapPlan Plan;
 				
-				auto ReconstructCurrent{Current.Action};
-				
-				decltype(CameFrom)::iterator It;
-				while ((It = CameFrom.find(ReconstructCurrent)) != CameFrom.end())
+				auto ReconstructCurrent{Current.State};
+				while (CameFromAction.contains(ReconstructCurrent))
 				{
-					ReconstructCurrent = CameFrom[ReconstructCurrent];
-					Plan.Add(ReconstructCurrent);
+					auto const &Step = CameFromAction[ReconstructCurrent];
+					Plan.Add(Step.Action);
+					
+					ReconstructCurrent = Step.PreviousState;
 				}
 				
 				Algo::Reverse(Plan);
@@ -132,41 +129,31 @@ namespace GOAP
 				return Plan;
 			}
 			
-			OpenQueue.pop();
-			
-			auto const &ActionPreconditions = Current.Action->Preconditions;
-			for (auto const ActionPrecondition : ActionPreconditions)
+			for (auto const Action : AvailableActions)
 			{
-				TArray<TObjectPtr<UGOAPActionAsset>> QualifyingActions; // Neighbors
-				DesiredStateByQualifyingActions.MultiFind(ActionPrecondition.StateKey, QualifyingActions);
-			
-				for (auto const Action : QualifyingActions)
-				{
-					auto const TentativeGScore = Current.CostFromStart + Action->BaseCost;
-					if (TentativeGScore >= GetCostScore(GScores, Action)) continue;
-					
-					CameFrom.insert_or_assign(Action, Current.Action);
-					GScores.insert_or_assign(Action, TentativeGScore);
-					FScores.insert_or_assign(Action, TentativeGScore + Heuristic(Action));
-					
-					ClosedSet.erase(Action);
-					OpenQueue.emplace(
-						Action,
-						TentativeGScore,
-						Heuristic(Action)
-					);
-				}
+				if (!Action->CanExecute(Current.State)) continue;
+				
+				auto const TentativeCost = Current.CostFromStart + Action->BaseCost;
+				FNode Child{
+					Action,
+					Current.State,
+					TentativeCost,
+					Goal,
+				};
+				
+				if (GScores.contains(Child.State) && TentativeCost >= GScores[Child.State]) continue;
+				
+				OpenQueue.emplace(Child);
+				
+				CameFromAction[Child.State] = FCameFrom{
+					.PreviousState = Current.State,
+					.Action = Action,
+				};
+				GScores[Child.State] = TentativeCost;
 			}
 		}
 		
 		UE_LOG(LogTemp, Warning, TEXT("Empty plan returned!"));
 		return {};
-	}
-
-	void UGOAPActionPlanner::BeginPlay()
-	{
-		Super::BeginPlay();
-		
-		Graph = FGOAPGraph{AvailableActions};
 	}
 }

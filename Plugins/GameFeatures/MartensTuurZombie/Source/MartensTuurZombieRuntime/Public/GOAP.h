@@ -5,26 +5,32 @@
 
 enum class EGOAPState : uint8
 {
-	HasWeapon,
-	HasFood,
-	SeesEnemy,
+	HasWeapon = 1 << 0u,
+	HasFood = 1 << 1u,
+	SeesEnemy = 1 << 2u,
 };
 
 class FWorldState final
 {
-	TMap<EGOAPState, bool> StateValues{};
+	using Underlying = 
+	std::underlying_type_t<EGOAPState>;
+	Underlying State{0u};
 	
 public:
 	[[nodiscard]]
 	bool Get(EGOAPState Key) const
 	{
-		// keys that aren't found will return default of bool, i.e. false. this is acceptable behavior
-		return StateValues.FindRef(Key);
+		return (State & static_cast<Underlying>(Key)) != 0u;
 	}
 	
 	void Set(EGOAPState Key, bool Value)
 	{
-		StateValues.Add(Key, Value);
+		auto const Bit = static_cast<Underlying>(Key);
+		
+		if (Value)
+			State |= Bit;
+		else
+			State &= ~Bit;
 	}
 };
 
@@ -60,6 +66,9 @@ struct FGoal final
 	// 0 to 1, 1 being least content
 	// TODO: probably the heuristic score in A*?
 	float GetDiscontentmentScore(FWorldState const &State) const;
+	
+	[[nodiscard]]
+	bool IsSatisfied(FWorldState const &State) const;
 };
 
 USTRUCT(BlueprintType)
@@ -118,4 +127,7 @@ public:
 	
 	[[nodiscard]]
 	FWorldState SimulateApplication(FWorldState const &Current) const;
+	
+	[[nodiscard]]
+	bool CanExecute(FWorldState const &State) const;
 };
