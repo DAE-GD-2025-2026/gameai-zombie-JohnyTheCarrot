@@ -15,13 +15,15 @@ enum class EGOAPState : uint8
 	HasFoundHouse = 1 << 4u,
 };
 
-class FWorldState final
+USTRUCT()
+struct FWorldState final
 {
 	using Underlying = 
 	std::underlying_type_t<EGOAPState>;
 	Underlying State{0u};
 	
-public:
+	GENERATED_BODY()
+	
 	[[nodiscard]]
 	bool Get(EGOAPState Key) const
 	{
@@ -39,12 +41,6 @@ public:
 	}
 	
 	[[nodiscard]]
-	Underlying GetBitField() const
-	{
-		return State;
-	}
-	
-	[[nodiscard]]
 	bool operator==(FWorldState const &Other) const
 	{
 		return State == Other.State;
@@ -56,7 +52,7 @@ struct std::hash<FWorldState> : std::hash<std::underlying_type_t<EGOAPState>>
 {
 	std::size_t operator()(FWorldState const &State) const
 	{
-		return std::hash<std::underlying_type_t<EGOAPState>>{}(State.GetBitField());
+		return std::hash<std::underlying_type_t<EGOAPState>>{}(State.State);
 	}
 };
 
@@ -115,16 +111,13 @@ struct FEffect final
 };
 
 UCLASS(Blueprintable)
-class UGOAPActionExecutor : public UObject
+class UGOAPActionExecutor : public UActorComponent
 {
 	GENERATED_BODY()
 	
 public:
 	UFUNCTION(BlueprintNativeEvent)
-	void Begin(AAIController *Controller);
-	
-	UFUNCTION(BlueprintNativeEvent)
-	void Tick(float DeltaTime);
+	void Begin(UObject *WorldContextObject, AAIController *Controller);
 	
 	UFUNCTION(BlueprintNativeEvent)
 	void Abort();

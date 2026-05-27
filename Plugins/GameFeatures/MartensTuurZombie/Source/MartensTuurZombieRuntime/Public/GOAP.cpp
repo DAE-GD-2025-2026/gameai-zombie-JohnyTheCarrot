@@ -23,15 +23,11 @@ bool FGoal::IsSatisfied(FWorldState const& State) const
 	return true;
 }
 
+void UGOAPActionExecutor::Begin_Implementation(UObject* WorldContextObject, AAIController* Controller)
+{
+}
+
 void UGOAPActionExecutor::Abort_Implementation()
-{
-}
-
-void UGOAPActionExecutor::Tick_Implementation(float DeltaTime)
-{
-}
-
-void UGOAPActionExecutor::Begin_Implementation(AAIController* Controller)
 {
 }
 

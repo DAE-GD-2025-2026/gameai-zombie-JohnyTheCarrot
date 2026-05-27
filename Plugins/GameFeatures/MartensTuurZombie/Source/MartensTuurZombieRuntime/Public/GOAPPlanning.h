@@ -5,13 +5,13 @@
 
 using GoapGraphNode = TObjectPtr<UGOAPActionAsset>;
 
-UCLASS()
+UCLASS(ClassGroup=(AI), meta=(BlueprintSpawnableComponent))
 class MARTENSTUURZOMBIERUNTIME_API UGoapGraph final : public UActorComponent
 {
 public:
 	GENERATED_BODY()
 	
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category="GOAP")
 	TArray<TObjectPtr<UGOAPActionAsset>> AvailableActions;
 	
 	using GoapPlan = TArray<TObjectPtr<UGOAPActionAsset>>;
