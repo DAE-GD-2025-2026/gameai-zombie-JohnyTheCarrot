@@ -1,26 +1,45 @@
 #include "GOAP.h"
 
-float FGoal::GetDiscontentmentScore(FWorldState const& State) const
+float UGoal::GetDiscontentmentScore(EGOAPState State) const
 {
 	float Discontentment = 0.f;
 	for (auto const &[StateKey, Value] : Conditions)
 	{
-		if (State.Get(StateKey) != Value)
+		if (EnumHasAllFlags(State, StateKey) == Value)
 			Discontentment += 1.f;
 	}
 	
 	return Discontentment;
 }
 
-bool FGoal::IsSatisfied(FWorldState const& State) const
+bool UGoal::IsSatisfied(EGOAPState State) const
 {
+	EGOAPState FinalDesiredState{};
 	for (auto const &[StateKey, Value] : Conditions)
 	{
-		if (State.Get(StateKey) != Value)
-			return false;
+		if (Value)
+			EnumAddFlags(FinalDesiredState, StateKey);
+		else
+			EnumRemoveFlags(FinalDesiredState, StateKey);
 	}
 	
-	return true;
+	return EnumHasAllFlags(State, FinalDesiredState);
+}
+
+void UGOAPActionExecutor::BeginPlay()
+{
+	Super::BeginPlay();
+	UE_LOG(LogTemp, Warning, TEXT("attached UGOAPActionExecutor"));
+}
+
+void UGOAPActionExecutor::Finish(EGOAPExecutorResult Result)
+{
+	Status = Result;
+}
+
+EGOAPExecutorResult UGOAPActionExecutor::ExecutorTick_Implementation(UObject* WorldContextObject, AAIController* Controller)
+{
+	return EGOAPExecutorResult::Success;
 }
 
 void UGOAPActionExecutor::Begin_Implementation(UObject* WorldContextObject, AAIController* Controller)
@@ -31,9 +50,9 @@ void UGOAPActionExecutor::Abort_Implementation()
 {
 }
 
-FWorldState UGOAPActionAsset::SimulateApplication(FWorldState const& Current) const
+EGOAPState UGOAPActionAsset::SimulateApplication(EGOAPState Current) const
 {
-	FWorldState Result{Current};
+	auto Result{Current};
 	
 	for (auto const &Effect : Effects)
 	{
@@ -43,11 +62,11 @@ FWorldState UGOAPActionAsset::SimulateApplication(FWorldState const& Current) co
 	return Result;
 }
 
-bool UGOAPActionAsset::CanExecute(FWorldState const& State) const
+bool UGOAPActionAsset::CanExecute(EGOAPState State) const
 {
 	for (auto const [ConditionKey, ConditionValue] : Preconditions)
 	{
-		if (State.Get(ConditionKey) != ConditionValue) return false;
+		if (EnumHasAllFlags(State, ConditionKey) == ConditionValue) return false;
 	}
 	
 	return true;

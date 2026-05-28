@@ -6,18 +6,18 @@ struct FNode final
 {
 	TObjectPtr<UGOAPActionAsset> Action;
 	
-	FWorldState State;
+	EGOAPState State;
 	
 	float CostFromStart{0.f};
 	float HeuristicCost;
 	
-	FNode(TObjectPtr<UGOAPActionAsset> ActionIn, FWorldState const &StateIn, float CostIn, FGoal const &Goal)
+	FNode(TObjectPtr<UGOAPActionAsset> ActionIn, EGOAPState StateIn, float CostIn, UGoal const &Goal)
 		: Action{ActionIn}
 		, State{Action->SimulateApplication(StateIn)}
 		, CostFromStart{CostIn}
 		, HeuristicCost{Goal.GetDiscontentmentScore(State)} {}
 	
-	FNode(FWorldState const &StartState, FGoal const &Goal)
+	FNode(EGOAPState StartState, UGoal const &Goal)
 		: Action{nullptr}
 		, State{StartState}
 		, HeuristicCost{Goal.GetDiscontentmentScore(State)}
@@ -49,23 +49,32 @@ struct FNode final
 	}
 };
 
-UGoapGraph::GoapPlan UGoapGraph::Plan(FWorldState const& StartState, FGoal const& Goal) const
+void UGoapGraph::InitializeGoap()
 {
+	for (auto const &ActionAsset : AvailableActions)
+	{
+		GetOwner()->AddComponentByClass(ActionAsset->ExecutorClass, false, FTransform::Identity, false);
+	}
+}
+
+UGoapGraph::GoapPlan UGoapGraph::Plan(EGOAPState StartState, UGoal *Goal) const
+{
+	check(Goal != nullptr);
 	FNode const StartNode{
 		StartState,
-		Goal
+		*Goal
 	};
 	std::priority_queue<FNode, std::vector<FNode>, std::greater<FNode>> OpenQueue{};
 	OpenQueue.emplace(StartNode);
 	
 	struct FCameFrom final
 	{
-		FWorldState PreviousState;
+		EGOAPState PreviousState;
 		UGOAPActionAsset* Action;
 	};
 	
-	std::unordered_map<FWorldState, FCameFrom> CameFromAction;
-	std::unordered_map<FWorldState, float> GScores;
+	std::unordered_map<EGOAPState, FCameFrom> CameFromAction;
+	std::unordered_map<EGOAPState, float> GScores;
 	GScores[StartState] = 0.f;
 	
 	while (!OpenQueue.empty())
@@ -76,7 +85,7 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(FWorldState const& StartState, FGoal const
 		// if (ClosedSet.contains(Current.State))
 		// 	continue;
 		
-		if (Goal.IsSatisfied(Current.State))
+		if (Goal->IsSatisfied(Current.State))
 		{
 			// We are done, we have reached the goal!
 			GoapPlan Plan;
@@ -104,7 +113,7 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(FWorldState const& StartState, FGoal const
 				Action,
 				Current.State,
 				TentativeCost,
-				Goal,
+				*Goal,
 			};
 			
 			if (GScores.contains(Child.State) && TentativeCost >= GScores[Child.State]) continue;

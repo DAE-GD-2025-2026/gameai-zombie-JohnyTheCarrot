@@ -4,9 +4,10 @@
 #include "AIController.h"
 #include "GOAP.generated.h"
 
-UENUM()
+UENUM(BlueprintType, meta=(Bitflags, BitmaskEnum="EGOAPState"))
 enum class EGOAPState : uint8
 {
+	None = 0 UMETA(Hidden),
 	HasWeapon = 1 << 0u,
 	HasFood = 1 << 1u,
 	SeesEnemy = 1 << 2u,
@@ -15,71 +16,37 @@ enum class EGOAPState : uint8
 	HasFoundHouse = 1 << 4u,
 };
 
-USTRUCT()
-struct FWorldState final
-{
-	using Underlying = 
-	std::underlying_type_t<EGOAPState>;
-	Underlying State{0u};
-	
-	GENERATED_BODY()
-	
-	[[nodiscard]]
-	bool Get(EGOAPState Key) const
-	{
-		return (State & static_cast<Underlying>(Key)) != 0u;
-	}
-	
-	void Set(EGOAPState Key, bool Value)
-	{
-		auto const Bit = static_cast<Underlying>(Key);
-		
-		if (Value)
-			State |= Bit;
-		else
-			State &= ~Bit;
-	}
-	
-	[[nodiscard]]
-	bool operator==(FWorldState const &Other) const
-	{
-		return State == Other.State;
-	}
-};
-
-template<>
-struct std::hash<FWorldState> : std::hash<std::underlying_type_t<EGOAPState>>
-{
-	std::size_t operator()(FWorldState const &State) const
-	{
-		return std::hash<std::underlying_type_t<EGOAPState>>{}(State.State);
-	}
-};
+ENUM_CLASS_FLAGS(EGOAPState);
 
 USTRUCT(BlueprintType)
 struct FCondition final
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="GOAP")
 	EGOAPState StateKey{};
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="GOAP")
 	bool DesiredValue{};
 	
 	[[nodiscard]]
-	bool DoesWorldStateConform(FWorldState const &State) const
+	bool DoesWorldStateConform(EGOAPState State) const
 	{
-		return State.Get(StateKey) == DesiredValue;
+		if (DesiredValue)
+			return (State & StateKey) == StateKey;
+		
+		return (State & StateKey) == EGOAPState::None;
 	}
 };
 
-USTRUCT(BlueprintType)
-struct FGoal final
+UCLASS(BlueprintType)
+class UGoal final : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	
-	UPROPERTY()
+public:
+	// TODO: narrow down edit, read/write etc
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GOAP")
 	TArray<FCondition> Conditions;
 	
 	[[nodiscard]]
@@ -87,10 +54,10 @@ struct FGoal final
 	// The higher, the less we adhere, so the less content we are.
 	// 0 to 1, 1 being least content
 	// TODO: probably the heuristic score in A*?
-	float GetDiscontentmentScore(FWorldState const &State) const;
+	float GetDiscontentmentScore(EGOAPState State) const;
 	
 	[[nodiscard]]
-	bool IsSatisfied(FWorldState const &State) const;
+	bool IsSatisfied(EGOAPState State) const;
 };
 
 USTRUCT(BlueprintType)
@@ -98,16 +65,27 @@ struct FEffect final
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GOAP")
 	EGOAPState StateKey{};
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GOAP")
 	bool Value{};
 	
-	void Apply(FWorldState &State) const
+	void Apply(EGOAPState &State) const
 	{
-		State.Set(StateKey, Value);
+		if (Value)
+			State |= StateKey;
+		else
+			State &= ~StateKey;
 	}
+};
+
+UENUM(BlueprintType)
+enum class EGOAPExecutorResult : uint8
+{
+	Busy,
+	Success,
+	Failure,
 };
 
 UCLASS(Blueprintable)
@@ -116,8 +94,19 @@ class UGOAPActionExecutor : public UActorComponent
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintNativeEvent)
+	UPROPERTY(BlueprintReadOnly)
+	EGOAPExecutorResult Status{false};
+	
+	virtual void BeginPlay() override;
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void Begin(UObject *WorldContextObject, AAIController *Controller);
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	EGOAPExecutorResult ExecutorTick(UObject *WorldContextObject, AAIController *Controller);
+	
+	UFUNCTION(BlueprintCallable)
+	void Finish(EGOAPExecutorResult Result);
 	
 	UFUNCTION(BlueprintNativeEvent)
 	void Abort();
@@ -129,7 +118,7 @@ class UGOAPActionAsset : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	FName Name;
 	
 	UPROPERTY(EditDefaultsOnly)
@@ -141,12 +130,12 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float BaseCost = 1.f;
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	TSubclassOf<UGOAPActionExecutor> ExecutorClass;
 	
 	[[nodiscard]]
-	FWorldState SimulateApplication(FWorldState const &Current) const;
+	EGOAPState SimulateApplication(EGOAPState Current) const;
 	
 	[[nodiscard]]
-	bool CanExecute(FWorldState const &State) const;
+	bool CanExecute(EGOAPState State) const;
 };

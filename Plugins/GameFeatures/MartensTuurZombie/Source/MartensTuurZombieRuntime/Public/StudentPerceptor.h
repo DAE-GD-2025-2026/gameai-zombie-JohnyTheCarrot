@@ -46,7 +46,7 @@ class MARTENSTUURZOMBIERUNTIME_API UStudentPerceptor : public UActorComponent
 {
 	GENERATED_BODY()
 	
-	FWorldState SurvivorState;
+	EGOAPState SurvivorState;
 	
 	UPROPERTY()
 	TArray<FKnownHouse> KnownHouses{};
