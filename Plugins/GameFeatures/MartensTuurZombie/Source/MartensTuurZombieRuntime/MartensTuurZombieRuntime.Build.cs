@@ -25,7 +25,7 @@ public class MartensTuurZombieRuntime : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "GameAI_Zombie",
+				"Core", "GameAI_Zombie", "NavigationSystem"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

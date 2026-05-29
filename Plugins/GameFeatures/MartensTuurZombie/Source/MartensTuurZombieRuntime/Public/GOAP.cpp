@@ -64,9 +64,16 @@ EGOAPState UGOAPActionAsset::SimulateApplication(EGOAPState Current) const
 
 bool UGOAPActionAsset::CanExecute(EGOAPState State) const
 {
+	UE_LOG(LogTemp, Warning, TEXT("Checking CanExecute..."));
 	for (auto const [ConditionKey, ConditionValue] : Preconditions)
 	{
-		if (EnumHasAllFlags(State, ConditionKey) == ConditionValue) return false;
+		FString Name =
+			StaticEnum<EGOAPState>()->GetNameStringByValue(
+				static_cast<int64>(EGOAPState::HasWeapon)
+			);
+		auto const HasCondition = EnumHasAllFlags(State, ConditionKey);
+		UE_LOG(LogTemp, Warning, TEXT("Expects %s to be %s, is %s."), *Name, *FString{ConditionValue ? "True" : "False"}, *FString{HasCondition ? "True" : "False"});
+		if (EnumHasAllFlags(State, ConditionKey) != ConditionValue) return false;
 	}
 	
 	return true;

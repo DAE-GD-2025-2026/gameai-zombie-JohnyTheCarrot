@@ -95,7 +95,7 @@ class UGOAPActionExecutor : public UActorComponent
 	
 public:
 	UPROPERTY(BlueprintReadOnly)
-	EGOAPExecutorResult Status{false};
+	EGOAPExecutorResult Status{EGOAPExecutorResult::Busy};
 	
 	virtual void BeginPlay() override;
 	

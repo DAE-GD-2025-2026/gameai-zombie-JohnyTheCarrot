@@ -59,6 +59,7 @@ void UGoapGraph::InitializeGoap()
 
 UGoapGraph::GoapPlan UGoapGraph::Plan(EGOAPState StartState, UGoal *Goal) const
 {
+	UE_LOG(LogTemp, Warning, TEXT("start of planning"));
 	check(Goal != nullptr);
 	FNode const StartNode{
 		StartState,
@@ -77,16 +78,20 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(EGOAPState StartState, UGoal *Goal) const
 	std::unordered_map<EGOAPState, float> GScores;
 	GScores[StartState] = 0.f;
 	
+	UE_LOG(LogTemp, Warning, TEXT("Before start of while"));
 	while (!OpenQueue.empty())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Start of while"));
 		auto const Current = OpenQueue.top();
 		OpenQueue.pop();
 		
 		// if (ClosedSet.contains(Current.State))
 		// 	continue;
 		
+		UE_LOG(LogTemp, Warning, TEXT("Check if goal satisfied"));
 		if (Goal->IsSatisfied(Current.State))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("goal satisfied"));
 			// We are done, we have reached the goal!
 			GoapPlan Plan;
 			
@@ -104,9 +109,14 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(EGOAPState StartState, UGoal *Goal) const
 			return Plan;
 		}
 		
+		UE_LOG(LogTemp, Warning, TEXT("Checking %i available actions"), AvailableActions.Num());
 		for (auto const &Action : AvailableActions)
 		{
-			if (!Action->CanExecute(Current.State)) continue;
+			if (!Action->CanExecute(Current.State))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Can't execute %s"), *Action->Name.ToString());
+				continue;
+			}
 			
 			auto const TentativeCost = Current.CostFromStart + Action->BaseCost;
 			FNode Child{
