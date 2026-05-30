@@ -6,18 +6,18 @@ struct FNode final
 {
 	TObjectPtr<UGOAPActionAsset> Action;
 	
-	EGOAPState State;
+	EGOAPFlags_Martens_Tuur State;
 	
 	float CostFromStart{0.f};
 	float HeuristicCost;
 	
-	FNode(TObjectPtr<UGOAPActionAsset> ActionIn, EGOAPState StateIn, float CostIn, UGoal const &Goal)
+	FNode(TObjectPtr<UGOAPActionAsset> ActionIn, EGOAPFlags_Martens_Tuur StateIn, float CostIn, UGoal const &Goal)
 		: Action{ActionIn}
 		, State{Action->SimulateApplication(StateIn)}
 		, CostFromStart{CostIn}
 		, HeuristicCost{Goal.GetDiscontentmentScore(State)} {}
 	
-	FNode(EGOAPState StartState, UGoal const &Goal)
+	FNode(EGOAPFlags_Martens_Tuur StartState, UGoal const &Goal)
 		: Action{nullptr}
 		, State{StartState}
 		, HeuristicCost{Goal.GetDiscontentmentScore(State)}
@@ -49,6 +49,12 @@ struct FNode final
 	}
 };
 
+UGoapGraph::UGoapGraph()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+}
+
 void UGoapGraph::InitializeGoap()
 {
 	for (auto const &ActionAsset : AvailableActions)
@@ -57,12 +63,12 @@ void UGoapGraph::InitializeGoap()
 	}
 }
 
-UGoapGraph::GoapPlan UGoapGraph::Plan(EGOAPState StartState, UGoal *Goal) const
+UGoapGraph::GoapPlan UGoapGraph::Plan(FGOAPState_Martens_Tuur StartState, UGoal *Goal) const
 {
 	UE_LOG(LogTemp, Warning, TEXT("start of planning"));
 	check(Goal != nullptr);
 	FNode const StartNode{
-		StartState,
+		StartState.Flags,
 		*Goal
 	};
 	std::priority_queue<FNode, std::vector<FNode>, std::greater<FNode>> OpenQueue{};
@@ -70,13 +76,13 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(EGOAPState StartState, UGoal *Goal) const
 	
 	struct FCameFrom final
 	{
-		EGOAPState PreviousState;
+		EGOAPFlags_Martens_Tuur PreviousState;
 		UGOAPActionAsset* Action;
 	};
 	
-	std::unordered_map<EGOAPState, FCameFrom> CameFromAction;
-	std::unordered_map<EGOAPState, float> GScores;
-	GScores[StartState] = 0.f;
+	std::unordered_map<EGOAPFlags_Martens_Tuur, FCameFrom> CameFromAction;
+	std::unordered_map<EGOAPFlags_Martens_Tuur, float> GScores;
+	GScores[StartState.Flags] = 0.f;
 	
 	UE_LOG(LogTemp, Warning, TEXT("Before start of while"));
 	while (!OpenQueue.empty())
@@ -150,7 +156,22 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(EGOAPState StartState, UGoal *Goal) const
 	return {};
 }
 
-UGOAPActionAsset* UGOAPPlanner_MartensTuur::GetCurrentAction() const
+void UGoapGraph::ActivatePlan(TArray<UGOAPActionAsset*> const& Plan)
+{
+	CurrentPlan = std::move(Plan);
+	CurrentActionIndex = 0;
+	auto const *CurrentAction = GetCurrentAction();
+	auto const CurrentExecutorClass = CurrentAction->ExecutorClass;
+	// TODO: is a component really the best idea...?
+	auto const CurrentExecutor = GetOwner()->GetComponentByClass<UGOAPActionExecutor>();
+	check(CurrentExecutor != nullptr);
+	
+	auto const Controller = Cast<APawn>(GetOwner())->GetController();
+	auto const AIController = Cast<AAIController>(Controller);
+	CurrentExecutor->Begin(AIController, AIController);
+}
+
+UGOAPActionAsset* UGoapGraph::GetCurrentAction() const
 {
 	// index 0 is invalid if the plan is empty
 	if (!CurrentPlan.IsValidIndex(CurrentActionIndex)) return nullptr;
@@ -158,7 +179,7 @@ UGOAPActionAsset* UGOAPPlanner_MartensTuur::GetCurrentAction() const
 	return CurrentPlan[CurrentActionIndex];
 }
 
-void UGOAPPlanner_MartensTuur::TickComponent(float DeltaTime, enum ELevelTick TickType,
+void UGoapGraph::TickComponent(float DeltaTime, enum ELevelTick TickType,
                                              FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -166,7 +187,11 @@ void UGOAPPlanner_MartensTuur::TickComponent(float DeltaTime, enum ELevelTick Ti
 	if (CurrentPlan.IsEmpty()) return;
 	
 	auto const *CurrentAction = GetCurrentAction();
-	if (!CurrentAction) return;
+	if (!CurrentAction)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No current action"));
+		return;
+	}
 	
 	auto const CurrentExecutorClass = CurrentAction->ExecutorClass;
 	// TODO: is a component really the best idea...?
@@ -176,6 +201,7 @@ void UGOAPPlanner_MartensTuur::TickComponent(float DeltaTime, enum ELevelTick Ti
 	{
 	case EGOAPExecutorResult::Busy:
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Action %s busy..."), *CurrentAction->Name.ToString());
 			auto const Controller = Cast<APawn>(GetOwner())->GetController();
 			auto const AIController = Cast<AAIController>(Controller);
 			

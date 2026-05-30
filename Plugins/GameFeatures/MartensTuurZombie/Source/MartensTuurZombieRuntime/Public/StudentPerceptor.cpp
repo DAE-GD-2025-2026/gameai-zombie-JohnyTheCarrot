@@ -9,15 +9,30 @@
 
 void UStudentPerceptor::RefreshSurvivorState()
 {
-	SurvivorState = {};
-	
-	for (auto const &Item : KnownItems)
+	if (!GoapComp)
 	{
-		if (Item.Type == EItemType::Pistol || Item.Type == EItemType::Shotgun)
-			EnumAddFlags(SurvivorState, EGOAPState::HasFoundWeapon);
+		UE_LOG(LogTemp, Warning, TEXT("No GoapComp"));
+		GoapComp = GetOwner()->GetComponentByClass<UGoapGraph>();
+		return;
 	}
-	if (!KnownHouses.IsEmpty())
-		EnumAddFlags(SurvivorState, EGOAPState::HasFoundHouse);
+	
+	GoapComp->State.Health = HealthComp->GetHealth() / HealthComp->GetMaxHealth();
+	GoapComp->State.Stamina = StaminaComp->GetCurrentStamina() / StaminaComp->GetMaxStamina();
+	GoapComp->State.AwareOf.WeaponsNum = KnownWeapons.Num();
+	GoapComp->State.AwareOf.HousesNum = KnownHouses.Num();
+	GoapComp->State.AwareOf.FoodNum = KnownFoods.Num();
+	GoapComp->State.AwareOf.MedkitsNum = KnownMedkits.Num();
+	// TODO: enemies
+	
+	GoapComp->State.UpdateFlags();
+	
+	// for (auto const &Item : KnownItems)
+	// {
+	// 	if (Item.Type == EItemType::Pistol || Item.Type == EItemType::Shotgun)
+	// 		EnumAddFlags(SurvivorState, EGOAPFlags_Martens_Tuur::HasFoundWeapon);
+	// }
+	// if (!KnownHouses.IsEmpty())
+	// 	EnumAddFlags(SurvivorState, EGOAPFlags_Martens_Tuur::HasFoundHouse);
 }
 
 UStudentPerceptor::UStudentPerceptor()
@@ -25,18 +40,15 @@ UStudentPerceptor::UStudentPerceptor()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-FKnownItem const *UStudentPerceptor::GetClosestWeapon() const
+FVector const *UStudentPerceptor::GetClosestWeapon() const
 {
-	FKnownItem const* Closest{};
+	FVector const* Closest{};
 	auto const ActorPos = GetOwner()->GetActorLocation();
 	
-	for (auto const &Item : KnownItems)
+	for (auto const &Item : KnownWeapons)
 	{
-		auto const &[Type, Location] = Item;
-		if (Type != EItemType::Pistol && Type != EItemType::Shotgun) continue;
-		
 		// TODO: this doesn't take into account cases where the direct distance is lower, but the path to get there is longer
-		if (Closest == nullptr || FVector::DistSquared(ActorPos, Location) < FVector::DistSquared(ActorPos, Closest->Location))
+		if (Closest == nullptr || FVector::DistSquared(ActorPos, Item) < FVector::DistSquared(ActorPos, *Closest))
 		{
 			Closest = &Item;
 		}
@@ -49,10 +61,15 @@ void UStudentPerceptor::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (auto PerceptionComp = GetOwner()->GetComponentByClass<UAIPerceptionComponent>())
-	{
-		PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &UStudentPerceptor::OnPerceptionUpdated);
-	}
+	auto PerceptionComp = GetOwner()->GetComponentByClass<UAIPerceptionComponent>();
+	check(PerceptionComp);
+	PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &UStudentPerceptor::OnPerceptionUpdated);
+	
+	HealthComp = GetOwner()->GetComponentByClass<UHealthComponent>();
+	check(HealthComp);
+	
+	StaminaComp = GetOwner()->GetComponentByClass<UStaminaComponent>();
+	check(StaminaComp);
 }
 
 void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -71,13 +88,43 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	}
 	else if (ABaseItem *Item = Cast<ABaseItem>(Actor))
 	{
-		FKnownItem const KnownItem{.Type = Item->GetItemType(), .Location = Item->GetActorLocation()};
-		// check if we already know the item
-		if (KnownItems.Find(KnownItem) != INDEX_NONE) return;
+		auto const Type = Item->GetItemType();
+		if (Type == EItemType::Pistol || Type == EItemType::Shotgun)
+		{
+			FVector const KnownWeapon{Item->GetActorLocation()};
+			if (KnownWeapons.Find(KnownWeapon) != INDEX_NONE) return;
+			
+			KnownWeapons.Add(KnownWeapon);
+			return;
+		}
 		
-		KnownItems.Add(KnownItem);
+		if (Type == EItemType::Food)
+		{
+			FVector const KnownFood{Item->GetActorLocation()};
+			if (KnownFoods.Find(KnownFood) != INDEX_NONE) return;
+			
+			KnownFoods.Add(KnownFood);
+			return;
+		}
+		
+		if (Type == EItemType::Medkit)
+		{
+			auto const Loc = Item->GetActorLocation();
+			if (KnownMedkits.Find(Loc) != INDEX_NONE) return;
+			
+			KnownMedkits.Add(Loc);
+			return;
+		}
 	}
 	else return;
+	
+	RefreshSurvivorState();
+}
+
+void UStudentPerceptor::TickComponent(float DeltaTime, enum ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
 	RefreshSurvivorState();
 }

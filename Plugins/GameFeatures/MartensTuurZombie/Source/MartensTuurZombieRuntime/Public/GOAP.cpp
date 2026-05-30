@@ -1,6 +1,35 @@
 #include "GOAP.h"
 
-float UGoal::GetDiscontentmentScore(EGOAPState State) const
+void FGOAPState_Martens_Tuur::UpdateFlags()
+{
+	bool IsFlagsDirty = false;
+	
+	auto const SetFlag = [this, &IsFlagsDirty](EGOAPFlags_Martens_Tuur Flag, bool Value)
+	{
+		auto const CurrentValue = (Flags & Flag) == Flag;
+		if (CurrentValue != Value) IsFlagsDirty = true;
+		
+		if (Value)
+			EnumAddFlags(Flags, Flag);
+		else
+			EnumRemoveFlags(Flags, Flag);
+	};
+	
+	// State Stamina: CurrentStamina / MaxStamina
+	constexpr float TirednessStaminaPercentageThreshold = 0.2f;
+	
+	SetFlag(EGOAPFlags_Martens_Tuur::HasFoundWeapon, AwareOf.WeaponsNum > 0);
+	SetFlag(EGOAPFlags_Martens_Tuur::HasFoundHouse, AwareOf.HousesNum > 0);
+	SetFlag(EGOAPFlags_Martens_Tuur::SeesEnemy, AwareOf.EnemiesNum > 0);
+	SetFlag(EGOAPFlags_Martens_Tuur::IsTired, Stamina < TirednessStaminaPercentageThreshold);
+	
+	if (IsFlagsDirty)
+	{
+		// TODO: flags changed, check if our plan can still work
+	}
+}
+
+float UGoal::GetDiscontentmentScore(EGOAPFlags_Martens_Tuur State) const
 {
 	float Discontentment = 0.f;
 	for (auto const &[StateKey, Value] : Conditions)
@@ -12,9 +41,9 @@ float UGoal::GetDiscontentmentScore(EGOAPState State) const
 	return Discontentment;
 }
 
-bool UGoal::IsSatisfied(EGOAPState State) const
+bool UGoal::IsSatisfied(EGOAPFlags_Martens_Tuur State) const
 {
-	EGOAPState FinalDesiredState{};
+	EGOAPFlags_Martens_Tuur FinalDesiredState{};
 	for (auto const &[StateKey, Value] : Conditions)
 	{
 		if (Value)
@@ -46,7 +75,7 @@ void UGOAPActionExecutor::Begin_Implementation(UObject* WorldContextObject, AAIC
 {
 }
 
-EGOAPState UGOAPActionAsset::SimulateApplication(EGOAPState Current) const
+EGOAPFlags_Martens_Tuur UGOAPActionAsset::SimulateApplication(EGOAPFlags_Martens_Tuur Current) const
 {
 	auto Result{Current};
 	
@@ -58,13 +87,13 @@ EGOAPState UGOAPActionAsset::SimulateApplication(EGOAPState Current) const
 	return Result;
 }
 
-bool UGOAPActionAsset::CanExecute(EGOAPState State) const
+bool UGOAPActionAsset::CanExecute(EGOAPFlags_Martens_Tuur State) const
 {
 	UE_LOG(LogTemp, Warning, TEXT("Checking CanExecute..."));
 	for (auto const [ConditionKey, ConditionValue] : Preconditions)
 	{
 		FString Name =
-			StaticEnum<EGOAPState>()->GetNameStringByValue(
+			StaticEnum<EGOAPFlags_Martens_Tuur>()->GetNameStringByValue(
 				static_cast<int64>(ConditionKey)
 			);
 		auto const HasCondition = EnumHasAllFlags(State, ConditionKey);

@@ -9,6 +9,8 @@ UCLASS(Blueprintable, ClassGroup=(AI), meta=(BlueprintSpawnableComponent))
 class MARTENSTUURZOMBIERUNTIME_API UGoapGraph : public UActorComponent
 {
 public:
+	UGoapGraph();
+	
 	GENERATED_BODY()
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GOAP")
@@ -20,17 +22,13 @@ public:
 	void InitializeGoap();
 	
 	UFUNCTION(BlueprintCallable, Category="GOAP")
-	TArray<UGOAPActionAsset*> Plan(EGOAPState StartState, UGoal *Goal) const;
-};
-
-UCLASS(Category="GOAP")
-class MARTENSTUURZOMBIERUNTIME_API  UGOAPPlanner_MartensTuur : public UGoapGraph
-{
-	GENERATED_BODY()
-
-public:
+	TArray<UGOAPActionAsset*> Plan(FGOAPState_Martens_Tuur StartState, UGoal *Goal) const;
+	
+	UFUNCTION(BlueprintCallable, Category="GOAP")
+	void ActivatePlan(TArray<UGOAPActionAsset*> const &Plan);
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GOAP")
-	EGOAPState State{};
+	FGOAPState_Martens_Tuur State{};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GOAP")
 	TArray<UGOAPActionAsset*> CurrentPlan;

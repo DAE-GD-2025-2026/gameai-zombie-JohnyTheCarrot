@@ -19,7 +19,7 @@ void UGOAPActionFetchWeapon_MartensTuur::Begin_Implementation(UObject* WorldCont
 	auto const *ClosestWeapon = CachedPerceptor->GetClosestWeapon();
 	check(ClosestWeapon); // we shouldn't fail this, because one of the preconditions is knowing where a weapon is.
 	
-	auto const MoveResult = Controller->MoveToLocation(ClosestWeapon->Location, AcceptanceRadius);
+	auto const MoveResult = Controller->MoveToLocation(*ClosestWeapon, AcceptanceRadius);
 	
 	Status = EGOAPExecutorResult::Busy;
 	

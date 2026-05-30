@@ -5,7 +5,7 @@
 #include "GOAP.generated.h"
 
 UENUM(BlueprintType, meta=(Bitflags, BitmaskEnum="EGOAPState"))
-enum class EGOAPState : uint8
+enum class EGOAPFlags_Martens_Tuur : uint8
 {
 	None = 0 UMETA(Hidden),
 	HasWeapon = 1 << 0u,
@@ -14,9 +14,34 @@ enum class EGOAPState : uint8
 	// TODO: if we don't already know where one is, searching has an unknown cost.. what do
 	HasFoundWeapon = 1 << 3u,
 	HasFoundHouse = 1 << 4u,
+	
+	IsTired = 1 << 5u,
 };
 
-ENUM_CLASS_FLAGS(EGOAPState);
+ENUM_CLASS_FLAGS(EGOAPFlags_Martens_Tuur);
+
+USTRUCT(BlueprintType)
+struct FGOAPState_Martens_Tuur
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	EGOAPFlags_Martens_Tuur Flags;
+	
+	float Health{};
+	float Stamina{};
+	
+	struct
+	{
+		int WeaponsNum{};
+		int HousesNum{};
+		int FoodNum{};
+		int MedkitsNum{};
+		int EnemiesNum{};
+	} AwareOf;
+	
+	void UpdateFlags();
+};
 
 USTRUCT(BlueprintType)
 struct FCondition final
@@ -24,18 +49,18 @@ struct FCondition final
 	GENERATED_BODY()
 	
 	UPROPERTY(EditDefaultsOnly, Category="GOAP")
-	EGOAPState StateKey{};
+	EGOAPFlags_Martens_Tuur StateKey{};
 	
 	UPROPERTY(EditDefaultsOnly, Category="GOAP")
 	bool DesiredValue{};
 	
 	[[nodiscard]]
-	bool DoesWorldStateConform(EGOAPState State) const
+	bool DoesWorldStateConform(EGOAPFlags_Martens_Tuur State) const
 	{
 		if (DesiredValue)
 			return (State & StateKey) == StateKey;
 		
-		return (State & StateKey) == EGOAPState::None;
+		return (State & StateKey) == EGOAPFlags_Martens_Tuur::None;
 	}
 };
 
@@ -57,10 +82,10 @@ public:
 	// The higher, the less we adhere, so the less content we are.
 	// 0 to 1, 1 being least content
 	// TODO: probably the heuristic score in A*?
-	float GetDiscontentmentScore(EGOAPState State) const;
+	float GetDiscontentmentScore(EGOAPFlags_Martens_Tuur State) const;
 	
 	[[nodiscard]]
-	bool IsSatisfied(EGOAPState State) const;
+	bool IsSatisfied(EGOAPFlags_Martens_Tuur State) const;
 };
 
 USTRUCT(BlueprintType)
@@ -69,12 +94,12 @@ struct FEffect final
 	GENERATED_BODY()
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GOAP")
-	EGOAPState StateKey{};
+	EGOAPFlags_Martens_Tuur StateKey{};
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GOAP")
 	bool Value{};
 	
-	void Apply(EGOAPState &State) const
+	void Apply(EGOAPFlags_Martens_Tuur &State) const
 	{
 		if (Value)
 			State |= StateKey;
@@ -134,8 +159,8 @@ public:
 	TSubclassOf<UGOAPActionExecutor> ExecutorClass;
 	
 	[[nodiscard]]
-	EGOAPState SimulateApplication(EGOAPState Current) const;
+	EGOAPFlags_Martens_Tuur SimulateApplication(EGOAPFlags_Martens_Tuur Current) const;
 	
 	[[nodiscard]]
-	bool CanExecute(EGOAPState State) const;
+	bool CanExecute(EGOAPFlags_Martens_Tuur State) const;
 };

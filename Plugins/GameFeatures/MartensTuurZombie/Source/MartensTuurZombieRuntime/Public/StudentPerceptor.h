@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GOAP.h"
+#include "GOAPPlanning.h"
+#include "Common/HealthComponent.h"
+#include "Common/StaminaComponent.h"
 #include "Components/ActorComponent.h"
 #include "Items/ItemType.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -26,27 +29,10 @@ struct FKnownHouse final
 	}
 };
 
-USTRUCT()
-struct FKnownItem
-{
-	GENERATED_BODY()
-	
-	EItemType Type;
-	FVector Location;
-	
-	[[nodiscard]]
-	bool operator==(FKnownItem const &Other) const
-	{
-		return Location == Other.Location && Type == Other.Type;
-	}
-};
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MARTENSTUURZOMBIERUNTIME_API UStudentPerceptor : public UActorComponent
 {
 	GENERATED_BODY()
-	
-	EGOAPState SurvivorState;
 	
 	void RefreshSurvivorState();
 
@@ -54,17 +40,34 @@ public:
 	// Sets default values for this component's properties
 	UStudentPerceptor();
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UGoapGraph *GoapComp{};
+	
+	UPROPERTY()
+	UHealthComponent *HealthComp{};
+	
+	UPROPERTY()
+	UStaminaComponent *StaminaComp{};
+	
 	UPROPERTY()
 	TArray<FKnownHouse> KnownHouses{};
 	
 	UPROPERTY()
-	TArray<FKnownItem> KnownItems{};
+	TArray<FVector> KnownWeapons{};
+	
+	UPROPERTY()
+	TArray<FVector> KnownFoods{};
+	
+	UPROPERTY()
+	TArray<FVector> KnownMedkits{};
 	
 	[[nodiscard]]
-	FKnownItem const *GetClosestWeapon() const;
+	FVector const *GetClosestWeapon() const;
 	
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
 	virtual void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 };
