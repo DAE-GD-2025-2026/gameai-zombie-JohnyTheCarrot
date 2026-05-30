@@ -4,7 +4,7 @@
 #include "AI/NavigationSystemBase.h"
 #include "Navigation/PathFollowingComponent.h"
 
-constexpr float AcceptanceRadius{50.f};
+constexpr static float AcceptanceRadius{50.f};
 
 void UGOAPActionFetchWeapon_MartensTuur::Begin_Implementation(UObject* WorldContextObject, AAIController* Controller)
 {
@@ -34,7 +34,7 @@ void UGOAPActionFetchWeapon_MartensTuur::Begin_Implementation(UObject* WorldCont
 EGOAPExecutorResult UGOAPActionFetchWeapon_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
 {
-	if (FVector::DistSquared(Controller->GetOwner()->GetActorLocation(), CurrentDestination * CurrentDestination) <= AcceptanceRadius)
+	if (FVector::DistSquared(GetOwner()->GetActorLocation(), CurrentDestination * CurrentDestination) <= AcceptanceRadius)
 	{
 		return EGOAPExecutorResult::Success;
 	}

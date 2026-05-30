@@ -8,6 +8,8 @@ using GoapGraphNode = TObjectPtr<UGOAPActionAsset>;
 UCLASS(Blueprintable, ClassGroup=(AI), meta=(BlueprintSpawnableComponent))
 class MARTENSTUURZOMBIERUNTIME_API UGoapGraph : public UActorComponent
 {
+	void NextAction();
+	
 public:
 	UGoapGraph();
 	

@@ -49,6 +49,27 @@ struct FNode final
 	}
 };
 
+void UGoapGraph::NextAction()
+{
+	if (CurrentPlan.IsValidIndex(CurrentActionIndex + 1))
+	{
+		++CurrentActionIndex;
+		
+		auto const *CurrentAction = GetCurrentAction();
+		auto const CurrentExecutorClass = CurrentAction->ExecutorClass;
+		auto const CurrentExecutor = Cast<UGOAPActionExecutor>(GetOwner()->GetComponentByClass(CurrentExecutorClass));
+		
+		auto const Controller = Cast<APawn>(GetOwner())->GetController();
+		auto const AIController = Cast<AAIController>(Controller);
+		CurrentExecutor->Begin(AIController, AIController);
+		
+		return;
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("Plan completed!"));
+	CurrentPlan = {};
+}
+
 UGoapGraph::UGoapGraph()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -213,6 +234,7 @@ void UGoapGraph::TickComponent(float DeltaTime, enum ELevelTick TickType,
 		break;
 	case EGOAPExecutorResult::Success:
 		UE_LOG(LogTemp, Warning, TEXT("Action success"));
+		NextAction();
 		break;
 	case EGOAPExecutorResult::Failure:
 		UE_LOG(LogTemp, Warning, TEXT("Action failure"));

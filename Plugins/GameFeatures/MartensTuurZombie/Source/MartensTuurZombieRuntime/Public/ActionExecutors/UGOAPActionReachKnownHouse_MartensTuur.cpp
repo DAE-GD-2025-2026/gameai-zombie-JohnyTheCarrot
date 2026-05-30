@@ -1,6 +1,6 @@
 #include "UGOAPActionReachKnownHouse_MartensTuur.h"
 
-constexpr float AcceptanceRadius{30.f};
+constexpr static float AcceptanceRadius{30.f};
 
 void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
@@ -23,7 +23,7 @@ void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* World
 EGOAPExecutorResult UGOAPActionReachKnownHouse_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
 {
-	if (FVector::DistSquared(Controller->GetOwner()->GetActorLocation(), HouseLocation * HouseLocation) <= AcceptanceRadius)
+	if (FVector::DistSquared(GetOwner()->GetActorLocation(), HouseLocation * HouseLocation) <= AcceptanceRadius)
 	{
 		return EGOAPExecutorResult::Success;
 	}
