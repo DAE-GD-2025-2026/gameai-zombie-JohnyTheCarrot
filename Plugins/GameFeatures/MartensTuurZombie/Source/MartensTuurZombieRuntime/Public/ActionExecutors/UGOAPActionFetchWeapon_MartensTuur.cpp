@@ -19,7 +19,8 @@ void UGOAPActionFetchWeapon_MartensTuur::Begin_Implementation(UObject* WorldCont
 	auto const *ClosestWeapon = CachedPerceptor->GetClosestWeapon();
 	check(ClosestWeapon); // we shouldn't fail this, because one of the preconditions is knowing where a weapon is.
 	
-	auto const MoveResult = Controller->MoveToLocation(*ClosestWeapon, AcceptanceRadius);
+	CurrentDestination = *ClosestWeapon;
+	auto const MoveResult = Controller->MoveToLocation(CurrentDestination, AcceptanceRadius);
 	
 	Status = EGOAPExecutorResult::Busy;
 	
@@ -33,5 +34,10 @@ void UGOAPActionFetchWeapon_MartensTuur::Begin_Implementation(UObject* WorldCont
 EGOAPExecutorResult UGOAPActionFetchWeapon_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
 {
-	return Super::ExecutorTick_Implementation(WorldContextObject, Controller);
+	if (FVector::DistSquared(Controller->GetOwner()->GetActorLocation(), CurrentDestination * CurrentDestination) <= AcceptanceRadius)
+	{
+		return EGOAPExecutorResult::Success;
+	}
+	
+	return EGOAPExecutorResult::Busy;
 }
