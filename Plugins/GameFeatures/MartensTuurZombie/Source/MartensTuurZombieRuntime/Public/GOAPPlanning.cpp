@@ -163,7 +163,7 @@ void UGoapGraph::ActivatePlan(TArray<UGOAPActionAsset*> const& Plan)
 	auto const *CurrentAction = GetCurrentAction();
 	auto const CurrentExecutorClass = CurrentAction->ExecutorClass;
 	// TODO: is a component really the best idea...?
-	auto const CurrentExecutor = GetOwner()->GetComponentByClass<UGOAPActionExecutor>();
+	auto const CurrentExecutor = Cast<UGOAPActionExecutor>(GetOwner()->GetComponentByClass(CurrentExecutorClass));
 	check(CurrentExecutor != nullptr);
 	
 	auto const Controller = Cast<APawn>(GetOwner())->GetController();
@@ -195,7 +195,7 @@ void UGoapGraph::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	
 	auto const CurrentExecutorClass = CurrentAction->ExecutorClass;
 	// TODO: is a component really the best idea...?
-	auto const CurrentExecutor = GetOwner()->GetComponentByClass<UGOAPActionExecutor>();
+	auto const CurrentExecutor = Cast<UGOAPActionExecutor>(GetOwner()->GetComponentByClass(CurrentExecutorClass));
 	check(CurrentExecutor != nullptr);
 	switch (CurrentExecutor->Status)
 	{
