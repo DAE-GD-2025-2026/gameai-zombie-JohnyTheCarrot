@@ -106,6 +106,14 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(EGOAPState StartState, UGoal *Goal) const
 			
 			Algo::Reverse(Plan);
 			
+			UE_LOG(LogTemp, Warning, TEXT("For the goal \"%s\", the plan is as follows:"), *Goal->Name.ToString());
+			for (auto const &ActionAsset : Plan)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("- %s"), *ActionAsset->Name.ToString());
+			}
+			
+			UE_LOG(LogTemp, Warning, TEXT("... Profit, probably"));
+			
 			return Plan;
 		}
 		
@@ -140,4 +148,45 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(EGOAPState StartState, UGoal *Goal) const
 	
 	UE_LOG(LogTemp, Warning, TEXT("Empty plan returned!"));
 	return {};
+}
+
+UGOAPActionAsset* UGOAPPlanner_MartensTuur::GetCurrentAction() const
+{
+	// index 0 is invalid if the plan is empty
+	if (!CurrentPlan.IsValidIndex(CurrentActionIndex)) return nullptr;
+	
+	return CurrentPlan[CurrentActionIndex];
+}
+
+void UGOAPPlanner_MartensTuur::TickComponent(float DeltaTime, enum ELevelTick TickType,
+                                             FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	if (CurrentPlan.IsEmpty()) return;
+	
+	auto const *CurrentAction = GetCurrentAction();
+	if (!CurrentAction) return;
+	
+	auto const CurrentExecutorClass = CurrentAction->ExecutorClass;
+	// TODO: is a component really the best idea...?
+	auto const CurrentExecutor = GetOwner()->GetComponentByClass<UGOAPActionExecutor>();
+	check(CurrentExecutor != nullptr);
+	switch (CurrentExecutor->Status)
+	{
+	case EGOAPExecutorResult::Busy:
+		{
+			auto const Controller = Cast<APawn>(GetOwner())->GetController();
+			auto const AIController = Cast<AAIController>(Controller);
+			
+			CurrentExecutor->ExecutorTick(AIController, AIController);
+		}
+		break;
+	case EGOAPExecutorResult::Success:
+		UE_LOG(LogTemp, Warning, TEXT("Action success"));
+		break;
+	case EGOAPExecutorResult::Failure:
+		UE_LOG(LogTemp, Warning, TEXT("Action failure"));
+		break;
+	}
 }

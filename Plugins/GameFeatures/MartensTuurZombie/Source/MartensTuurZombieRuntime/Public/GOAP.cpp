@@ -46,10 +46,6 @@ void UGOAPActionExecutor::Begin_Implementation(UObject* WorldContextObject, AAIC
 {
 }
 
-void UGOAPActionExecutor::Abort_Implementation()
-{
-}
-
 EGOAPState UGOAPActionAsset::SimulateApplication(EGOAPState Current) const
 {
 	auto Result{Current};
@@ -69,7 +65,7 @@ bool UGOAPActionAsset::CanExecute(EGOAPState State) const
 	{
 		FString Name =
 			StaticEnum<EGOAPState>()->GetNameStringByValue(
-				static_cast<int64>(EGOAPState::HasWeapon)
+				static_cast<int64>(ConditionKey)
 			);
 		auto const HasCondition = EnumHasAllFlags(State, ConditionKey);
 		UE_LOG(LogTemp, Warning, TEXT("Expects %s to be %s, is %s."), *Name, *FString{ConditionValue ? "True" : "False"}, *FString{HasCondition ? "True" : "False"});

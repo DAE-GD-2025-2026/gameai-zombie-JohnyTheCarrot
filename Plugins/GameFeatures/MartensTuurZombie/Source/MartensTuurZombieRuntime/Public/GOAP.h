@@ -45,6 +45,9 @@ class UGoal final : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GOAP")
+	FName Name;
+	
 	// TODO: narrow down edit, read/write etc
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GOAP")
 	TArray<FCondition> Conditions;
@@ -107,9 +110,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void Finish(EGOAPExecutorResult Result);
-	
-	UFUNCTION(BlueprintNativeEvent)
-	void Abort();
 };
 
 UCLASS(BlueprintType)

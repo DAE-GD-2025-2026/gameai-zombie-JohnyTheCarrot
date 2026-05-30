@@ -25,6 +25,26 @@ UStudentPerceptor::UStudentPerceptor()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
+FKnownItem const *UStudentPerceptor::GetClosestWeapon() const
+{
+	FKnownItem const* Closest{};
+	auto const ActorPos = GetOwner()->GetActorLocation();
+	
+	for (auto const &Item : KnownItems)
+	{
+		auto const &[Type, Location] = Item;
+		if (Type != EItemType::Pistol && Type != EItemType::Shotgun) continue;
+		
+		// TODO: this doesn't take into account cases where the direct distance is lower, but the path to get there is longer
+		if (Closest == nullptr || FVector::DistSquared(ActorPos, Location) < FVector::DistSquared(ActorPos, Closest->Location))
+		{
+			Closest = &Item;
+		}
+	}
+	
+	return Closest;
+}
+
 void UStudentPerceptor::BeginPlay()
 {
 	Super::BeginPlay();

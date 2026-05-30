@@ -48,17 +48,20 @@ class MARTENSTUURZOMBIERUNTIME_API UStudentPerceptor : public UActorComponent
 	
 	EGOAPState SurvivorState;
 	
+	void RefreshSurvivorState();
+
+public:
+	// Sets default values for this component's properties
+	UStudentPerceptor();
+	
 	UPROPERTY()
 	TArray<FKnownHouse> KnownHouses{};
 	
 	UPROPERTY()
 	TArray<FKnownItem> KnownItems{};
 	
-	void RefreshSurvivorState();
-
-public:
-	// Sets default values for this component's properties
-	UStudentPerceptor();
+	[[nodiscard]]
+	FKnownItem const *GetClosestWeapon() const;
 	
 	virtual void BeginPlay() override;
 
