@@ -163,4 +163,7 @@ public:
 	
 	[[nodiscard]]
 	bool CanExecute(EGOAPFlags_Martens_Tuur State) const;
+	
+	[[nodiscard]]
+	bool HasAchievedEffects(EGOAPFlags_Martens_Tuur State) const;
 };

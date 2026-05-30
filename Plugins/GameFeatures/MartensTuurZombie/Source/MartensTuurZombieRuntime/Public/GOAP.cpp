@@ -103,3 +103,17 @@ bool UGOAPActionAsset::CanExecute(EGOAPFlags_Martens_Tuur State) const
 	
 	return true;
 }
+
+bool UGOAPActionAsset::HasAchievedEffects(EGOAPFlags_Martens_Tuur State) const
+{
+	EGOAPFlags_Martens_Tuur FinalDesiredState{};
+	for (auto const &[StateKey, Value] : Effects)
+	{
+		if (Value)
+			EnumAddFlags(FinalDesiredState, StateKey);
+		else
+			EnumRemoveFlags(FinalDesiredState, StateKey);
+	}
+	
+	return EnumHasAllFlags(State, FinalDesiredState);
+}

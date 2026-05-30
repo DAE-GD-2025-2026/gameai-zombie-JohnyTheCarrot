@@ -206,6 +206,8 @@ void UGoapGraph::TickComponent(float DeltaTime, enum ELevelTick TickType,
 			auto const AIController = Cast<AAIController>(Controller);
 			
 			CurrentExecutor->ExecutorTick(AIController, AIController);
+			if (CurrentAction->HasAchievedEffects(State.Flags))
+				CurrentExecutor->Status = EGOAPExecutorResult::Success;
 		}
 		break;
 	case EGOAPExecutorResult::Success:
