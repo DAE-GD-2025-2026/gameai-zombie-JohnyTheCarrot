@@ -64,6 +64,9 @@ public:
 	[[nodiscard]]
 	FVector const *GetClosestWeapon() const;
 	
+	[[nodiscard]]
+	FVector const *GetClosestHouse() const;
+	
 	virtual void BeginPlay() override;
 
 	UFUNCTION()

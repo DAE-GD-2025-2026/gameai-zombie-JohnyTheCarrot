@@ -57,6 +57,24 @@ FVector const *UStudentPerceptor::GetClosestWeapon() const
 	return Closest;
 }
 
+FVector const* UStudentPerceptor::GetClosestHouse() const
+{
+	FVector const* Closest{};
+	auto const ActorPos = GetOwner()->GetActorLocation();
+
+	for (auto const &House : KnownHouses)
+	{
+		// This doesn't take into account cases where the direct distance is lower, but the path to get there is longer...
+		// but honestly, it's an organic character, it doesn't need to be perfect...
+		if (Closest == nullptr || FVector::DistSquared(ActorPos, House.Location) < FVector::DistSquared(ActorPos, *Closest))
+		{
+			Closest = &House.Location;
+		}
+	}
+
+	return Closest;
+}
+
 void UStudentPerceptor::BeginPlay()
 {
 	Super::BeginPlay();

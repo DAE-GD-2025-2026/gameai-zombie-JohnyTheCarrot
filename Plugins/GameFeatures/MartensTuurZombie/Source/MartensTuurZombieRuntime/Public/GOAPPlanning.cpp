@@ -59,6 +59,7 @@ void UGoapGraph::InitializeGoap()
 {
 	for (auto const &ActionAsset : AvailableActions)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Registring action %s executor"), *ActionAsset->Name.ToString())
 		GetOwner()->AddComponentByClass(ActionAsset->ExecutorClass, false, FTransform::Identity, false);
 	}
 }
