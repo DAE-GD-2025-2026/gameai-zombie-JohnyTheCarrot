@@ -14,9 +14,10 @@ enum class EGOAPFlags_Martens_Tuur : uint8
 	// TODO: if we don't already know where one is, searching has an unknown cost.. what do
 	HasFoundWeapon = 1 << 3u,
 	HasFoundHouse = 1 << 4u,
+	HasFoundFood = 1 << 5u,
 	
-	IsTired = 1 << 5u,
-	KnowsUncheckedHouse = 1 << 6u,
+	IsTired = 1 << 6u,
+	KnowsUncheckedHouse = 1 << 7u,
 };
 
 ENUM_CLASS_FLAGS(EGOAPFlags_Martens_Tuur);

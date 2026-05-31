@@ -9,6 +9,7 @@
 #include "Common/HealthComponent.h"
 #include "Common/StaminaComponent.h"
 #include "Components/ActorComponent.h"
+#include "Items/Food.h"
 #include "Items/ItemType.h"
 #include "Items/Weapon.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -44,7 +45,7 @@ public:
 	TArray<TWeakObjectPtr<AWeapon>> KnownWeapons{};
 	
 	UPROPERTY()
-	TArray<FVector> KnownFoods{};
+	TArray<TWeakObjectPtr<AFood>> KnownFoods{};
 	
 	UPROPERTY()
 	TArray<FVector> KnownMedkits{};
@@ -54,6 +55,9 @@ public:
 	
 	[[nodiscard]]
 	FKnownHouse_MartensTuur *GetClosestHouse(bool bAllowChecked = true);
+	
+	[[nodiscard]]
+	TWeakObjectPtr<AFood> GetClosestFood() const;
 	
 	virtual void BeginPlay() override;
 

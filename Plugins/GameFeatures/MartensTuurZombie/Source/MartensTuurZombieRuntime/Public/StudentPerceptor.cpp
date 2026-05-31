@@ -84,6 +84,23 @@ FKnownHouse_MartensTuur *UStudentPerceptor::GetClosestHouse(bool bAllowChecked)
 	return Closest;
 }
 
+TWeakObjectPtr<AFood> UStudentPerceptor::GetClosestFood() const
+{
+	TWeakObjectPtr<AFood> Closest{};
+	auto const ActorPos = GetOwner()->GetActorLocation();
+	
+	for (auto const &Item : KnownFoods)
+	{
+		// TODO: this doesn't take into account cases where the direct distance is lower, but the path to get there is longer
+		if (Closest == nullptr || FVector::DistSquared(ActorPos, Item->GetActorLocation()) < FVector::DistSquared(ActorPos, Closest->GetActorLocation()))
+		{
+			Closest = Item;
+		}
+	}
+	
+	return Closest;
+}
+
 void UStudentPerceptor::BeginPlay()
 {
 	Super::BeginPlay();
@@ -125,10 +142,9 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		}
 		else if (Type == EItemType::Food)
 		{
-			FVector const KnownFood{Item->GetActorLocation()};
-			if (KnownFoods.Find(KnownFood) != INDEX_NONE) return;
+			if (KnownFoods.Find(Cast<AFood>(Item)) != INDEX_NONE) return;
 			
-			KnownFoods.Add(KnownFood);
+			KnownFoods.Add(Cast<AFood>(Item));
 			return;
 		}
 		else if (Type == EItemType::Medkit)

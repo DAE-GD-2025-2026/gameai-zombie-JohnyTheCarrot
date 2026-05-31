@@ -20,7 +20,7 @@ void UGOAPActionScanHouseFor_MartensTuur::Begin_Implementation(UObject* WorldCon
 	}
 	House = *ClosestUncheckedHouse;
 	
-	auto const MoveResult = Controller->MoveToLocation(House.Bounds.Origin, AcceptanceRadius);
+	auto const MoveResult = Controller->MoveToLocation(House.Bounds.Origin, 10.f);
 	if (MoveResult == EPathFollowingRequestResult::Type::Failed)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Couldn't reach house location, failing."));
@@ -32,10 +32,14 @@ EGOAPExecutorResult UGOAPActionScanHouseFor_MartensTuur::ExecutorTick_Implementa
 	AAIController* Controller)
 {
 	if (IsDone())
+	{
+		House.HasChecked = true;
 		return EGOAPExecutorResult::Success;
+	}
 	
 	if (FVector::DistSquared(GetOwner()->GetActorLocation(), House.Bounds.Origin) <= AcceptanceRadius * AcceptanceRadius)
 	{
+		House.HasChecked = true;
 		return EGOAPExecutorResult::Failure;
 	}
 	
@@ -52,4 +56,16 @@ void UGoapActionScanHouseForWeapon_MartensTuur::Begin_Implementation(UObject* Wo
 bool UGoapActionScanHouseForWeapon_MartensTuur::IsDone()
 {
 	return CachedStudentPerceptor->KnownWeapons.Num() > NumKnownWeaponsAtStart;
+}
+
+void UGoapActionScanHouseForFood_MartensTuur::Begin_Implementation(UObject* WorldContextObject,
+	AAIController* Controller)
+{
+	Super::Begin_Implementation(WorldContextObject, Controller);
+	NumKnownFoodsAtStart = CachedStudentPerceptor->KnownFoods.Num();
+}
+
+bool UGoapActionScanHouseForFood_MartensTuur::IsDone()
+{
+	return CachedStudentPerceptor->KnownFoods.Num() > NumKnownFoodsAtStart;
 }

@@ -1,10 +1,10 @@
-#include "UGOAPActionFetchWeapon_MartensTuur.h"
+#include "UGOAPActionFetchItemByType_MartensTuur.h"
 
 #include "NavigationSystem.h"
 #include "AI/NavigationSystemBase.h"
 #include "Navigation/PathFollowingComponent.h"
 
-void UGOAPActionFetchWeapon_MartensTuur::Begin_Implementation(UObject* WorldContextObject, AAIController* Controller)
+void UGOAPActionFetchItemByType_MartensTuur::Begin_Implementation(UObject* WorldContextObject, AAIController* Controller)
 {
 	Super::Begin_Implementation(WorldContextObject, Controller);
 	
@@ -17,22 +17,21 @@ void UGOAPActionFetchWeapon_MartensTuur::Begin_Implementation(UObject* WorldCont
 	auto* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	check(NavSys);
 	
-	auto const ClosestWeapon = CachedPerceptor->GetClosestWeapon();
-	check(ClosestWeapon.IsValid()); // we shouldn't fail this, because one of the preconditions is knowing where a weapon is.
+	SelectTarget();
+	check(Target.Get());
 	
-	Target = ClosestWeapon;
 	auto const MoveResult = Controller->MoveToActor(Target.Get(), 10.f);
 	
 	Status = EGOAPExecutorResult::Busy;
 	
 	if (MoveResult == EPathFollowingRequestResult::Type::Failed)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Couldn't reach weapon location, failing."));
+		UE_LOG(LogTemp, Warning, TEXT("Couldn't reach item location, failing."));
 		Finish(EGOAPExecutorResult::Failure);
 	}
 }
 
-EGOAPExecutorResult UGOAPActionFetchWeapon_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
+EGOAPExecutorResult UGOAPActionFetchItemByType_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
 {
 	auto const PickupRange = CachedInventory->GetPickupRange();
@@ -46,13 +45,39 @@ EGOAPExecutorResult UGOAPActionFetchWeapon_MartensTuur::ExecutorTick_Implementat
 		}
 		if (FreeSlot == -1)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Couldn't pick up weapon because no free inventory slot"));
+			UE_LOG(LogTemp, Warning, TEXT("Couldn't pick up item because no free inventory slot"));
 			return EGOAPExecutorResult::Failure;
 		}
 		
-		CachedInventory->GrabItem(FreeSlot, Target.Get());
-		return EGOAPExecutorResult::Success;
+		if (CachedInventory->GrabItem(FreeSlot, Target.Get()))
+		{
+			RemoveFromKnown();
+			return EGOAPExecutorResult::Success;
+		}
+		
+		return EGOAPExecutorResult::Failure;
 	}
 	
 	return EGOAPExecutorResult::Busy;
 }
+
+void UGOAPActionFetchWeapon_MartensTuur::SelectTarget()
+{
+	Target = CachedPerceptor->GetClosestWeapon();
+}
+
+void UGOAPActionFetchWeapon_MartensTuur::RemoveFromKnown()
+{
+	CachedPerceptor->KnownWeapons.Remove(Cast<AWeapon>(Target.Get()));
+}
+
+void UGOAPActionFetchFood_MartensTuur::SelectTarget()
+{
+	Target = CachedPerceptor->GetClosestFood();
+}
+
+void UGOAPActionFetchFood_MartensTuur::RemoveFromKnown()
+{
+	CachedPerceptor->KnownFoods.Remove(Cast<AFood>(Target.Get()));
+}
+
