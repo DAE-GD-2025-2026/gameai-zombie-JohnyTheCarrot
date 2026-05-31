@@ -8,9 +8,9 @@ Goal Oriented Action Planning (GOAP)
 
 ## Research sources
 
-https://www.reddit.com/r/godot/comments/xgrk0g/comment/iote6ft/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-https://www.youtube.com/watch?v=nEnNtiumgII
-https://goap.crashkonijn.com/readme/tutorial/gettingstarted
+- https://www.reddit.com/r/godot/comments/xgrk0g/comment/iote6ft/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+- https://www.youtube.com/watch?v=nEnNtiumgII
+- https://goap.crashkonijn.com/readme/tutorial/gettingstarted
 
 ## Brief
 
@@ -21,6 +21,7 @@ Goals can be achieved through Actions.
 Initial state: Hungry
 
 We want to NOT be hungry. (Goal State: NotHungry)
+
 Actions could be eating an apple. (Preconditions: Hungry, HasApple) (Effects: +NotHungry, -HasApple)
 
 Fulfulling HasApple can be done by perhaps buying one from a merchant, or plucking one yourself.
@@ -34,6 +35,8 @@ The focus lies on the GOAP algorithm. The survivor will not always act optimally
 
 The application of GOAP to this project is essentially a proof of concept, to be further developed in the final zombie game hand in, which it would reflect.
 The goal of this specific handed in version of the zombie game is solely to test GOAP, but it is not perfectly used, as mentioned.
+An example of this compromise is the fact the survivor currently immediately points towards an enemy, instantly shoots.
+The goal of this, again, is to research GOAP.
 
 ## GOAP Implementation
 
@@ -61,3 +64,20 @@ SetFlag(EGOAPFlags_Martens_Tuur::HasFoundWeapon, AwareOf.WeaponsNum > 0);
 ```
 
 ## GOAP Use/Usage
+
+Both actions and goals are defined in data assets:
+
+<img width="1290" height="391" alt="image" src="https://github.com/user-attachments/assets/8bd8344f-8f45-4ea8-b6c9-73028896c7a2" />
+<img width="1003" height="380" alt="image" src="https://github.com/user-attachments/assets/c2bdee96-88ad-42fb-850c-4dc54828ba46" />
+
+Has Free Inventory Slots is another example of naive assumptions that get corrected, but overall help with planning
+in this case it is meant to help a goal give the agent something to do if other goals are met.
+<img width="1169" height="663" alt="image" src="https://github.com/user-attachments/assets/80eb3692-0410-4564-a613-8879e86d7bc6" />
+
+The actual logic of an action is defined through its Executor, which is implemented in C++.
+An executor has a status (Busy, Success, Failure). Busy means not to proceed to the next action. Failure means inherent re-evaluation of the plan. Success means proceed onwards.
+
+## Plans
+
+Since I plan to use this for my zombie game hand-in, I hope to further clean up some dead code.
+Of course I will also be making further changes to improve the behavior of the agent, such as allowing sprinting, running away.
