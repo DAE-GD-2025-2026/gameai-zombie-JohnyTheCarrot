@@ -117,3 +117,8 @@ bool UGOAPActionAsset::HasAchievedEffects(EGOAPFlags_Martens_Tuur State) const
 	
 	return EnumHasAllFlags(State, FinalDesiredState);
 }
+
+UGOAPActionExecutor* UGOAPActionAsset::GetAssociatedExecutorFromActor(AActor const* Actor) const
+{
+	return Cast<UGOAPActionExecutor>(Actor->GetComponentByClass(ExecutorClass));
+}

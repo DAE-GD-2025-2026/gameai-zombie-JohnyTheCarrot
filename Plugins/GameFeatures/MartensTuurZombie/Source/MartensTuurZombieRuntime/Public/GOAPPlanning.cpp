@@ -55,10 +55,9 @@ void UGoapGraph::NextAction()
 	{
 		++CurrentActionIndex;
 		
-		auto const *CurrentAction = GetCurrentAction();
-		auto const CurrentExecutorClass = CurrentAction->ExecutorClass;
-		auto const CurrentExecutor = Cast<UGOAPActionExecutor>(GetOwner()->GetComponentByClass(CurrentExecutorClass));
+		auto CurrentExecutor = GetCurrentAction()->GetAssociatedExecutorFromActor(GetOwner());
 		
+		UE_LOG(LogTemp, Warning, TEXT("Begin action '%s'..."), *GetCurrentAction()->Name.ToString());
 		auto const Controller = Cast<APawn>(GetOwner())->GetController();
 		auto const AIController = Cast<AAIController>(Controller);
 		CurrentExecutor->Begin(AIController, AIController);
@@ -181,16 +180,12 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(FGOAPState_Martens_Tuur StartState, UGoal 
 void UGoapGraph::ActivatePlan(TArray<UGOAPActionAsset*> const& Plan)
 {
 	CurrentPlan = std::move(Plan);
-	CurrentActionIndex = 0;
-	auto const *CurrentAction = GetCurrentAction();
-	auto const CurrentExecutorClass = CurrentAction->ExecutorClass;
-	// TODO: is a component really the best idea...?
-	auto const CurrentExecutor = Cast<UGOAPActionExecutor>(GetOwner()->GetComponentByClass(CurrentExecutorClass));
+	CurrentActionIndex = -1;
+	auto const CurrentExecutor = GetCurrentAction()->GetAssociatedExecutorFromActor(GetOwner());
 	check(CurrentExecutor != nullptr);
 	
-	auto const Controller = Cast<APawn>(GetOwner())->GetController();
-	auto const AIController = Cast<AAIController>(Controller);
-	CurrentExecutor->Begin(AIController, AIController);
+	// next of -1 is 0, i.e. plan[0]
+	NextAction();
 }
 
 UGOAPActionAsset* UGoapGraph::GetCurrentAction() const
@@ -215,15 +210,13 @@ void UGoapGraph::TickComponent(float DeltaTime, enum ELevelTick TickType,
 		return;
 	}
 	
-	auto const CurrentExecutorClass = CurrentAction->ExecutorClass;
-	// TODO: is a component really the best idea...?
-	auto const CurrentExecutor = Cast<UGOAPActionExecutor>(GetOwner()->GetComponentByClass(CurrentExecutorClass));
+	auto const CurrentExecutor = CurrentAction->GetAssociatedExecutorFromActor(GetOwner());
+	
 	check(CurrentExecutor != nullptr);
 	switch (CurrentExecutor->Status)
 	{
 	case EGOAPExecutorResult::Busy:
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Action %s busy..."), *CurrentAction->Name.ToString());
 			auto const Controller = Cast<APawn>(GetOwner())->GetController();
 			auto const AIController = Cast<AAIController>(Controller);
 			
@@ -234,6 +227,8 @@ void UGoapGraph::TickComponent(float DeltaTime, enum ELevelTick TickType,
 		break;
 	case EGOAPExecutorResult::Success:
 		UE_LOG(LogTemp, Warning, TEXT("Action success"));
+		// Not every action executor inherently guarantees fulfillment of an effect.
+		// Finding a weapon requires reaching and checking a house, but a house doesn't necessarily contain a weapon.
 		NextAction();
 		break;
 	case EGOAPExecutorResult::Failure:

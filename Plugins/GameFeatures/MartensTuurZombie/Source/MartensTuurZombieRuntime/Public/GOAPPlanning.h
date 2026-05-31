@@ -39,7 +39,7 @@ public:
 	TObjectPtr<UGoal> CurrentGoal{};
 	
 	UPROPERTY()
-	int CurrentActionIndex{0};
+	int CurrentActionIndex{-1};
 	
 	[[nodiscard]]
 	UGOAPActionAsset *GetCurrentAction() const;

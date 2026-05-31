@@ -166,4 +166,7 @@ public:
 	
 	[[nodiscard]]
 	bool HasAchievedEffects(EGOAPFlags_Martens_Tuur State) const;
+	
+	[[nodiscard]]
+	UGOAPActionExecutor *GetAssociatedExecutorFromActor(AActor const* Actor) const;
 };
