@@ -2,6 +2,8 @@
 #include <utility>
 #include <queue>
 
+#include "StudentPerceptor.h"
+
 struct FNode final
 {
 	TObjectPtr<UGOAPActionAsset> Action;
@@ -53,6 +55,11 @@ void UGoapGraph::NextAction()
 {
 	if (CurrentPlan.IsValidIndex(CurrentActionIndex + 1))
 	{
+		if (auto const Perceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>())
+			Perceptor->RefreshSurvivorState();
+		else
+			UE_LOG(LogTemp, Warning, TEXT("NextAction found no perceptor!"));
+		
 		if (auto const CurrentAction = GetCurrentAction())
 			CurrentAction->GetAssociatedExecutorFromActor(GetOwner())->OnFinish();
 		
@@ -99,7 +106,20 @@ void UGoapGraph::InitializeGoap()
 
 UGoapGraph::GoapPlan UGoapGraph::Plan(FGOAPState_Martens_Tuur StartState, UGoal *Goal) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("start of planning"));
+	UE_LOG(LogTemp, Warning, TEXT("Planning started!"));
+	UE_LOG(LogTemp, Warning, TEXT("Current state:"));
+	LogFlags(StartState.Flags);
+	UE_LOG(LogTemp, Warning, TEXT("Conditions:"));
+	for (auto const &Cond : Goal->Conditions)
+	{
+		FString CondName =
+			StaticEnum<EGOAPFlags_Martens_Tuur>()->GetNameStringByValue(
+				static_cast<uint8>(Cond.StateKey)
+			);
+		FString IsSetStr = Cond.DesiredValue ? "True" : "False";
+		UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *CondName, *IsSetStr);
+	}
+	
 	check(Goal != nullptr);
 	FNode const StartNode{
 		StartState.Flags,
@@ -118,17 +138,13 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(FGOAPState_Martens_Tuur StartState, UGoal 
 	std::unordered_map<EGOAPFlags_Value, float> GScores;
 	GScores[StartState.Flags] = 0.f;
 	
-	UE_LOG(LogTemp, Warning, TEXT("Before start of while"));
 	while (!OpenQueue.empty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Start of while"));
 		auto const Current = OpenQueue.top();
 		OpenQueue.pop();
 		
-		UE_LOG(LogTemp, Warning, TEXT("Check if goal satisfied"));
 		if (Goal->IsSatisfied(Current.State))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("goal satisfied"));
 			// We are done, we have reached the goal!
 			GoapPlan Plan;
 			
@@ -154,12 +170,10 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(FGOAPState_Martens_Tuur StartState, UGoal 
 			return Plan;
 		}
 		
-		UE_LOG(LogTemp, Warning, TEXT("Checking %i available actions"), AvailableActions.Num());
 		for (auto const &Action : AvailableActions)
 		{
 			if (!Action->CanExecute(Current.State))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Can't execute %s"), *Action->Name.ToString());
 				continue;
 			}
 			

@@ -53,6 +53,7 @@ EGOAPExecutorResult UGOAPActionFetchItemByType_MartensTuur::ExecutorTick_Impleme
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Picking up item"));
 			RemoveFromKnown();
+			CachedPerceptor->RefreshSurvivorState();
 			return EGOAPExecutorResult::Success;
 		}
 		
@@ -89,6 +90,9 @@ void UGOAPActionFetchMedkit_MartensTuur::SelectTarget()
 
 void UGOAPActionFetchMedkit_MartensTuur::RemoveFromKnown()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Removing medkit"));
+	auto const NumMedkitsKnown = CachedPerceptor->KnownMedkits.Num();
 	CachedPerceptor->KnownMedkits.Remove(Cast<AMedkit>(Target.Get()));
+	check(CachedPerceptor->KnownMedkits.Num() < NumMedkitsKnown);
 }
 

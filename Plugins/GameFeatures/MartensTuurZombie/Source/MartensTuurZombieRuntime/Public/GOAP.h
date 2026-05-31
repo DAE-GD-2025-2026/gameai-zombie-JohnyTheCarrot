@@ -27,9 +27,13 @@ enum class EGOAPFlags_Martens_Tuur : uint8
 	IsTired,
 	IsFullHealth,
 	KnowsUncheckedHouse,
+	KnowsUncheckedPotentialNeighborLocations,
+	Max UMETA(Hidden)
 };
 
 using EGOAPFlags_Value = uint32;
+
+void LogFlags(EGOAPFlags_Value Flags);
 
 USTRUCT(BlueprintType)
 struct FGOAPState_Martens_Tuur
@@ -49,6 +53,7 @@ struct FGOAPState_Martens_Tuur
 		int FoodNum{};
 		int MedkitsNum{};
 		int EnemiesNum{};
+		int PotentialNeighborLocationNum{};
 	} AwareOf;
 	
 	struct

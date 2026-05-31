@@ -1,26 +1,23 @@
 #pragma once
 #include "GOAP.h"
 #include "StudentPerceptor.h"
-#include "UGOAPActionReachKnownHouse_MartensTuur.generated.h"
+#include "UGOAPActionTryFindNeighboringHouses_MartensTuur.generated.h"
 
 UCLASS()
-class UGOAPActionReachKnownHouse_MartensTuur : public UGOAPActionExecutor
-{
+class UGOAPActionTryFindNeighboringHouses_MartensTuur : public UGOAPActionExecutor {
 	GENERATED_BODY()
 	
-	FKnownHouse_MartensTuur *House{};
+	UPROPERTY()
+	FVector CurrentDestination{};
 	
 	UPROPERTY()
-	AAIController* CachedController;
+	UStudentPerceptor *CachedStudentPerceptor{};
 	
 	UPROPERTY()
-	UStudentPerceptor *StudentPerceptor;
+	int NumHousesAtStart{};
 	
 public:
 	virtual void Begin_Implementation(UObject* WorldContextObject, AAIController* Controller) override;
 	
 	virtual EGOAPExecutorResult ExecutorTick_Implementation(UObject* WorldContextObject, AAIController* Controller) override;
-	
-	virtual void OnFinish() override;
 };
-

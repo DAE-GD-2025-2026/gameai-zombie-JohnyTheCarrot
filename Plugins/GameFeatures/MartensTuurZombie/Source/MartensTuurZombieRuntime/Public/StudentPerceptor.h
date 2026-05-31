@@ -23,12 +23,12 @@ UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MARTENSTUURZOMBIERUNTIME_API UStudentPerceptor : public UActorComponent
 {
 	GENERATED_BODY()
-	
-	void RefreshSurvivorState();
 
 public:
 	// Sets default values for this component's properties
 	UStudentPerceptor();
+	
+	void RefreshSurvivorState();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UGoapGraph *GoapComp{};
@@ -47,6 +47,10 @@ public:
 	
 	UPROPERTY()
 	TArray<FKnownHouse_MartensTuur> UncheckedHouses{};
+	
+	UPROPERTY()
+	// Mostly slightly outside the walls of houses we already know of, to try to find neighbors in villages
+	TArray<FVector> PlacesToCheckForHouse{};
 	
 	UPROPERTY()
 	TArray<TWeakObjectPtr<AWeapon>> KnownWeapons{};

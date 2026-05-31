@@ -17,13 +17,20 @@ void UStudentPerceptor::RefreshSurvivorState()
 		return;
 	}
 	
+	KnownMedkits.RemoveAll([](TWeakObjectPtr<AMedkit> const &Medkit)
+	{
+		return Medkit->GetValue() == 0 || !Medkit.IsValid() || Medkit->IsHidden();
+	});
+	
 	GoapComp->State.Health = HealthComp->GetHealth() / HealthComp->GetMaxHealth();
 	GoapComp->State.Stamina = StaminaComp->GetCurrentStamina() / StaminaComp->GetMaxStamina();
 	GoapComp->State.AwareOf.WeaponsNum = KnownWeapons.Num();
 	GoapComp->State.AwareOf.HousesNum = CheckedHouses.Num();
 	GoapComp->State.AwareOf.FoodNum = KnownFoods.Num();
+	// UE_LOG(LogTemp, Warning, TEXT("Num medkits: %d"), KnownMedkits.Num());
 	GoapComp->State.AwareOf.MedkitsNum = KnownMedkits.Num();
 	GoapComp->State.AwareOf.UncheckedHousesNum = UncheckedHouses.Num();
+	GoapComp->State.AwareOf.PotentialNeighborLocationNum = PlacesToCheckForHouse.Num();
 	
 	GoapComp->State.InventoryContains.Food = InventoryComp->GetInventory().ContainsByPredicate([](ABaseItem const *Item)
 	{
@@ -34,6 +41,11 @@ void UStudentPerceptor::RefreshSurvivorState()
 	{
 		if (!Item) return false;
 		return Item->GetItemType() == EItemType::Pistol || Item->GetItemType() == EItemType::Shotgun;
+	});
+	GoapComp->State.InventoryContains.Medkit = InventoryComp->GetInventory().ContainsByPredicate([](ABaseItem const *Item)
+	{
+		if (!Item) return false;
+		return Item->GetItemType() == EItemType::Medkit;
 	});
 	GoapComp->State.InventoryContains.FreeSlots = InventoryComp->GetInventory().ContainsByPredicate([](ABaseItem const *Item)
 	{
@@ -157,6 +169,10 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		GEngine->AddOnScreenDebugMessage(7, 5.f, FColor::Yellow, 
 		FString::Printf(TEXT("Saw House!!!!!")));
 		UncheckedHouses.Add(KnownHouse);
+		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin - FVector{KnownHouse.Bounds.Extent.X, 0.f, 0.f});
+		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin + FVector{KnownHouse.Bounds.Extent.X, 0.f, 0.f});
+		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin - FVector{0.f, KnownHouse.Bounds.Extent.Y, 0.f});
+		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin + FVector{0.f, KnownHouse.Bounds.Extent.Y, 0.f});
 	}
 	else if (ABaseItem *Item = Cast<ABaseItem>(Actor))
 	{

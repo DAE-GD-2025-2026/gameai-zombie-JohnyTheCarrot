@@ -3,6 +3,20 @@
 #include "Common/HealthComponent.h"
 #include "Common/StaminaComponent.h"
 
+void LogFlags(EGOAPFlags_Value Flags)
+{
+	for (auto I = 0; I < static_cast<uint8>(EGOAPFlags_Martens_Tuur::Max); ++I)
+	{
+		FString Name =
+			StaticEnum<EGOAPFlags_Martens_Tuur>()->GetNameStringByValue(
+				I
+			);
+		auto const Bit = 1u << I;
+		FString IsSetStr = (Flags & Bit) == Bit ? "True" : "False";
+		UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *Name, *IsSetStr);
+	}
+}
+
 bool FGOAPState_Martens_Tuur::UpdateFlags()
 {
 	bool IsFlagsDirty = false;
@@ -35,6 +49,7 @@ bool FGOAPState_Martens_Tuur::UpdateFlags()
 	SetFlag(EGOAPFlags_Martens_Tuur::HasWeapon, InventoryContains.Weapon);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasMedkit, InventoryContains.Medkit);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasFreeInventorySlots, InventoryContains.FreeSlots);
+	SetFlag(EGOAPFlags_Martens_Tuur::KnowsUncheckedPotentialNeighborLocations, AwareOf.PotentialNeighborLocationNum);
 	
 	return IsFlagsDirty;
 }
@@ -90,16 +105,21 @@ float UGoal::GetDiscontentmentScore(EGOAPFlags_Value State) const
 
 bool UGoal::IsSatisfied(EGOAPFlags_Value State) const
 {
-	EGOAPFlags_Value FinalDesiredState{};
-	for (auto const &[StateKey, Value] : Conditions)
+	uint32 Required = 0;
+	uint32 Forbidden = 0;
+
+	for (auto const& [StateKey, Value] : Conditions)
 	{
+		const uint32 Bit = 1u << static_cast<uint8>(StateKey);
+
 		if (Value)
-			FinalDesiredState |= 1u << static_cast<uint8>(StateKey);
+			Required |= Bit;
 		else
-			FinalDesiredState &= ~(1u << static_cast<uint8>(StateKey));
+			Forbidden |= Bit;
 	}
 	
-	return (State & FinalDesiredState) == FinalDesiredState;
+	return (State & Required) == Required
+		&& (State & Forbidden) == 0;
 }
 
 void UGOAPActionExecutor::BeginPlay()
@@ -136,7 +156,6 @@ EGOAPFlags_Value UGOAPActionAsset::SimulateApplication(EGOAPFlags_Value Current)
 
 bool UGOAPActionAsset::CanExecute(EGOAPFlags_Value State) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("Checking CanExecute..."));
 	for (auto const [ConditionKey, ConditionValue] : Preconditions)
 	{
 		FString Name =
@@ -145,7 +164,6 @@ bool UGOAPActionAsset::CanExecute(EGOAPFlags_Value State) const
 			);
 		auto const Bit = 1u << static_cast<uint8>(ConditionKey);
 		auto const HasCondition = (State & Bit) == Bit;
-		UE_LOG(LogTemp, Warning, TEXT("Expects %s to be %s, is %s."), *Name, *FString{ConditionValue ? "True" : "False"}, *FString{HasCondition ? "True" : "False"});
 		if (HasCondition != ConditionValue) return false;
 	}
 	
@@ -154,16 +172,21 @@ bool UGOAPActionAsset::CanExecute(EGOAPFlags_Value State) const
 
 bool UGOAPActionAsset::HasAchievedEffects(EGOAPFlags_Value State) const
 {
-	EGOAPFlags_Value FinalDesiredState{};
-	for (auto const &[StateKey, Value] : Effects)
+	uint32 Required = 0;
+	uint32 Forbidden = 0;
+
+	for (auto const& [StateKey, Value] : Effects)
 	{
+		const uint32 Bit = 1u << static_cast<uint8>(StateKey);
+
 		if (Value)
-			FinalDesiredState |= 1u << static_cast<uint8>(StateKey);
+			Required |= Bit;
 		else
-			FinalDesiredState &= ~(1u << static_cast<uint8>(StateKey));
+			Forbidden |= Bit;
 	}
 	
-	return (State & FinalDesiredState) == FinalDesiredState;
+	return (State & Required) == Required
+		&& (State & Forbidden) == 0;
 }
 
 UGOAPActionExecutor* UGOAPActionAsset::GetAssociatedExecutorFromActor(AActor const* Actor) const
