@@ -20,6 +20,7 @@ void FGOAPState_Martens_Tuur::UpdateFlags()
 	
 	SetFlag(EGOAPFlags_Martens_Tuur::HasFoundWeapon, AwareOf.WeaponsNum > 0);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasFoundHouse, AwareOf.HousesNum > 0);
+	SetFlag(EGOAPFlags_Martens_Tuur::KnowsUncheckedHouse, AwareOf.UncheckedHousesNum > 0);
 	SetFlag(EGOAPFlags_Martens_Tuur::SeesEnemy, AwareOf.EnemiesNum > 0);
 	SetFlag(EGOAPFlags_Martens_Tuur::IsTired, Stamina < TirednessStaminaPercentageThreshold);
 	

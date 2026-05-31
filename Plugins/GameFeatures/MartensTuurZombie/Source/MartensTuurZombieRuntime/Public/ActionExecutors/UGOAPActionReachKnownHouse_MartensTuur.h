@@ -9,7 +9,7 @@ class UGOAPActionReachKnownHouse_MartensTuur : public UGOAPActionExecutor
 	GENERATED_BODY()
 	
 	UPROPERTY()
-	FVector HouseLocation{};
+	FKnownHouse_MartensTuur House{};
 	
 	UPROPERTY()
 	AAIController* CachedController;

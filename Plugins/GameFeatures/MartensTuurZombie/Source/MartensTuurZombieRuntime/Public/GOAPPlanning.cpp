@@ -181,8 +181,6 @@ void UGoapGraph::ActivatePlan(TArray<UGOAPActionAsset*> const& Plan)
 {
 	CurrentPlan = std::move(Plan);
 	CurrentActionIndex = -1;
-	auto const CurrentExecutor = GetCurrentAction()->GetAssociatedExecutorFromActor(GetOwner());
-	check(CurrentExecutor != nullptr);
 	
 	// next of -1 is 0, i.e. plan[0]
 	NextAction();
@@ -220,19 +218,23 @@ void UGoapGraph::TickComponent(float DeltaTime, enum ELevelTick TickType,
 			auto const Controller = Cast<APawn>(GetOwner())->GetController();
 			auto const AIController = Cast<AAIController>(Controller);
 			
-			CurrentExecutor->ExecutorTick(AIController, AIController);
+			CurrentExecutor->Status = CurrentExecutor->ExecutorTick(AIController, AIController);
 			if (CurrentAction->HasAchievedEffects(State.Flags))
 				CurrentExecutor->Status = EGOAPExecutorResult::Success;
 		}
 		break;
 	case EGOAPExecutorResult::Success:
 		UE_LOG(LogTemp, Warning, TEXT("Action success"));
-		// Not every action executor inherently guarantees fulfillment of an effect.
+		// TODO: Not every action executor inherently guarantees fulfillment of an effect.
 		// Finding a weapon requires reaching and checking a house, but a house doesn't necessarily contain a weapon.
 		NextAction();
 		break;
 	case EGOAPExecutorResult::Failure:
-		UE_LOG(LogTemp, Warning, TEXT("Action failure"));
-		break;
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Action failure, replanning..."));
+			auto const NewPlan = Plan(State, CurrentGoal);
+			ActivatePlan(NewPlan);
+			break;
+		}
 	}
 }

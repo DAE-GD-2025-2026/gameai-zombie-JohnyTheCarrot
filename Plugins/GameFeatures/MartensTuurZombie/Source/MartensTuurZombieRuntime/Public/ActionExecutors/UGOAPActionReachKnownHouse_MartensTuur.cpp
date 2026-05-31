@@ -14,15 +14,15 @@ void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* World
 	StudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>();
 	check(StudentPerceptor != nullptr);
 	
-	auto const ClosestPos = StudentPerceptor->GetClosestHouse();
-	check(ClosestPos);
+	auto const ClosestHouse = StudentPerceptor->GetClosestHouse();
+	check(ClosestHouse);
 	
-	HouseLocation = *ClosestPos;
+	House = *ClosestHouse;
 	
-	auto const MoveResult = Controller->MoveToLocation(HouseLocation, AcceptanceRadius);
+	auto const MoveResult = Controller->MoveToLocation(House.Bounds.Origin, 10.f);
 	if (MoveResult == EPathFollowingRequestResult::Type::Failed)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Couldn't reach weapon location, failing."));
+		UE_LOG(LogTemp, Warning, TEXT("Couldn't reach house location, failing."));
 		Finish(EGOAPExecutorResult::Failure);
 	}
 }
@@ -30,7 +30,7 @@ void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* World
 EGOAPExecutorResult UGOAPActionReachKnownHouse_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
 {
-	if (FVector::DistSquared(GetOwner()->GetActorLocation(), HouseLocation) <= AcceptanceRadius * AcceptanceRadius)
+	if (FVector::DistSquared(GetOwner()->GetActorLocation(), House.Bounds.Origin) <= AcceptanceRadius * AcceptanceRadius)
 	{
 		return EGOAPExecutorResult::Success;
 	}

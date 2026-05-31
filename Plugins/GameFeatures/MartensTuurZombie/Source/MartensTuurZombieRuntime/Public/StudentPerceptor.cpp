@@ -22,6 +22,13 @@ void UStudentPerceptor::RefreshSurvivorState()
 	GoapComp->State.AwareOf.HousesNum = KnownHouses.Num();
 	GoapComp->State.AwareOf.FoodNum = KnownFoods.Num();
 	GoapComp->State.AwareOf.MedkitsNum = KnownMedkits.Num();
+	GoapComp->State.AwareOf.UncheckedHousesNum = 0;
+	for (auto const &House : KnownHouses)
+	{
+		if (!House.HasChecked)
+			++GoapComp->State.AwareOf.UncheckedHousesNum;
+	}
+	
 	// TODO: enemies
 	
 	GoapComp->State.UpdateFlags();
@@ -40,35 +47,37 @@ UStudentPerceptor::UStudentPerceptor()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-FVector const *UStudentPerceptor::GetClosestWeapon() const
+TWeakObjectPtr<AWeapon> UStudentPerceptor::GetClosestWeapon() const
 {
-	FVector const* Closest{};
+	TWeakObjectPtr<AWeapon> Closest{};
 	auto const ActorPos = GetOwner()->GetActorLocation();
 	
 	for (auto const &Item : KnownWeapons)
 	{
 		// TODO: this doesn't take into account cases where the direct distance is lower, but the path to get there is longer
-		if (Closest == nullptr || FVector::DistSquared(ActorPos, Item) < FVector::DistSquared(ActorPos, *Closest))
+		if (Closest == nullptr || FVector::DistSquared(ActorPos, Item->GetActorLocation()) < FVector::DistSquared(ActorPos, Closest->GetActorLocation()))
 		{
-			Closest = &Item;
+			Closest = Item;
 		}
 	}
 	
 	return Closest;
 }
 
-FVector const* UStudentPerceptor::GetClosestHouse() const
+FKnownHouse_MartensTuur *UStudentPerceptor::GetClosestHouse(bool bAllowChecked)
 {
-	FVector const* Closest{};
+	FKnownHouse_MartensTuur* Closest{};
 	auto const ActorPos = GetOwner()->GetActorLocation();
 
-	for (auto const &House : KnownHouses)
+	for (auto &House : KnownHouses)
 	{
+		if (House.HasChecked && !bAllowChecked) continue;
+		
 		// This doesn't take into account cases where the direct distance is lower, but the path to get there is longer...
 		// but honestly, it's an organic character, it doesn't need to be perfect...
-		if (Closest == nullptr || FVector::DistSquared(ActorPos, House.Location) < FVector::DistSquared(ActorPos, *Closest))
+		if (Closest == nullptr || FVector::DistSquared(ActorPos, House.Bounds.Origin) < FVector::DistSquared(ActorPos, Closest->Bounds.Origin))
 		{
-			Closest = &House.Location;
+			Closest = &House;
 		}
 	}
 
@@ -97,7 +106,7 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 
 	if (AHouse *House = Cast<AHouse>(Actor))
 	{
-		FKnownHouse const KnownHouse{.Location = House->GetActorLocation()};
+		FKnownHouse_MartensTuur const KnownHouse{.Bounds = House->GetBounds()};
 		if (KnownHouses.Find(KnownHouse) != INDEX_NONE) return;
 		
 		GEngine->AddOnScreenDebugMessage(6, 1.f, FColor::Yellow, 
@@ -109,14 +118,12 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		auto const Type = Item->GetItemType();
 		if (Type == EItemType::Pistol || Type == EItemType::Shotgun)
 		{
-			FVector const KnownWeapon{Item->GetActorLocation()};
-			if (KnownWeapons.Find(KnownWeapon) != INDEX_NONE) return;
+			auto const Weapon = Cast<AWeapon>(Item);
+			if (KnownWeapons.Find(Weapon) != INDEX_NONE) return;
 			
-			KnownWeapons.Add(KnownWeapon);
-			return;
+			KnownWeapons.Add(Weapon);
 		}
-		
-		if (Type == EItemType::Food)
+		else if (Type == EItemType::Food)
 		{
 			FVector const KnownFood{Item->GetActorLocation()};
 			if (KnownFoods.Find(KnownFood) != INDEX_NONE) return;
@@ -124,14 +131,12 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 			KnownFoods.Add(KnownFood);
 			return;
 		}
-		
-		if (Type == EItemType::Medkit)
+		else if (Type == EItemType::Medkit)
 		{
 			auto const Loc = Item->GetActorLocation();
 			if (KnownMedkits.Find(Loc) != INDEX_NONE) return;
 			
 			KnownMedkits.Add(Loc);
-			return;
 		}
 	}
 	else return;

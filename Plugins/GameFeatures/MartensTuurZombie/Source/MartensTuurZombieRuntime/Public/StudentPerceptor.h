@@ -3,31 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FKnownHouse_MartensTuur.h"
 #include "GOAP.h"
 #include "GOAPPlanning.h"
 #include "Common/HealthComponent.h"
 #include "Common/StaminaComponent.h"
 #include "Components/ActorComponent.h"
 #include "Items/ItemType.h"
+#include "Items/Weapon.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISense_Damage.h"
 #include "StudentPerceptor.generated.h"
-
-USTRUCT()
-struct FKnownHouse final
-{
-	GENERATED_BODY()
-	
-	FVector Location;
-	
-	[[nodiscard]]
-	bool operator==(const FKnownHouse& Other) const
-	{
-		return Location == Other.Location;
-	}
-};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MARTENSTUURZOMBIERUNTIME_API UStudentPerceptor : public UActorComponent
@@ -50,10 +38,10 @@ public:
 	UStaminaComponent *StaminaComp{};
 	
 	UPROPERTY()
-	TArray<FKnownHouse> KnownHouses{};
+	TArray<FKnownHouse_MartensTuur> KnownHouses{};
 	
 	UPROPERTY()
-	TArray<FVector> KnownWeapons{};
+	TArray<TWeakObjectPtr<AWeapon>> KnownWeapons{};
 	
 	UPROPERTY()
 	TArray<FVector> KnownFoods{};
@@ -62,10 +50,10 @@ public:
 	TArray<FVector> KnownMedkits{};
 	
 	[[nodiscard]]
-	FVector const *GetClosestWeapon() const;
+	TWeakObjectPtr<AWeapon> GetClosestWeapon() const;
 	
 	[[nodiscard]]
-	FVector const *GetClosestHouse() const;
+	FKnownHouse_MartensTuur *GetClosestHouse(bool bAllowChecked = true);
 	
 	virtual void BeginPlay() override;
 

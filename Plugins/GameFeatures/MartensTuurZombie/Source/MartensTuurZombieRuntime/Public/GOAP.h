@@ -16,6 +16,7 @@ enum class EGOAPFlags_Martens_Tuur : uint8
 	HasFoundHouse = 1 << 4u,
 	
 	IsTired = 1 << 5u,
+	KnowsUncheckedHouse = 1 << 6u,
 };
 
 ENUM_CLASS_FLAGS(EGOAPFlags_Martens_Tuur);
@@ -35,6 +36,7 @@ struct FGOAPState_Martens_Tuur
 	{
 		int WeaponsNum{};
 		int HousesNum{};
+		int UncheckedHousesNum{};
 		int FoodNum{};
 		int MedkitsNum{};
 		int EnemiesNum{};
