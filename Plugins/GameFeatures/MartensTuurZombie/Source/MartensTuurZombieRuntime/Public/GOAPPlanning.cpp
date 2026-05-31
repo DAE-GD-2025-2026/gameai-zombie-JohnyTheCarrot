@@ -195,6 +195,11 @@ void UGoapGraph::ActivatePlan(TArray<UGOAPActionAsset*> const& Plan)
 		check(Executor);
 		Executor->OnFinish();
 	}
+	if (Plan.IsEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Tried to activate empty plan..."));
+		return;
+	}
 	CurrentPlan = std::move(Plan);
 	CurrentActionIndex = -1;
 	
