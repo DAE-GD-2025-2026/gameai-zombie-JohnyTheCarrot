@@ -1,5 +1,7 @@
 #include "UGOAPActionReachKnownHouse_MartensTuur.h"
 
+#include "Navigation/PathFollowingComponent.h"
+
 constexpr static float AcceptanceRadius{30.f};
 
 void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* WorldContextObject,
@@ -18,6 +20,11 @@ void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* World
 	HouseLocation = *ClosestPos;
 	
 	auto const MoveResult = Controller->MoveToLocation(HouseLocation, AcceptanceRadius);
+	if (MoveResult == EPathFollowingRequestResult::Type::Failed)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Couldn't reach weapon location, failing."));
+		Finish(EGOAPExecutorResult::Failure);
+	}
 }
 
 EGOAPExecutorResult UGOAPActionReachKnownHouse_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
