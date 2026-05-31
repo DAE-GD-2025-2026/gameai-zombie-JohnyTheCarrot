@@ -49,7 +49,7 @@ bool FGOAPState_Martens_Tuur::UpdateFlags()
 	SetFlag(EGOAPFlags_Martens_Tuur::HasWeapon, InventoryContains.Weapon);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasMedkit, InventoryContains.Medkit);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasFreeInventorySlots, InventoryContains.FreeSlots);
-	SetFlag(EGOAPFlags_Martens_Tuur::KnowsUncheckedPotentialNeighborLocations, AwareOf.PotentialNeighborLocationNum);
+	SetFlag(EGOAPFlags_Martens_Tuur::KnowsUncheckedPotentialNeighborLocations, AwareOf.PotentialNeighborLocationNum > 0);
 	
 	return IsFlagsDirty;
 }
@@ -158,10 +158,6 @@ bool UGOAPActionAsset::CanExecute(EGOAPFlags_Value State) const
 {
 	for (auto const [ConditionKey, ConditionValue] : Preconditions)
 	{
-		FString Name =
-			StaticEnum<EGOAPFlags_Martens_Tuur>()->GetNameStringByValue(
-				static_cast<int64>(ConditionKey)
-			);
 		auto const Bit = 1u << static_cast<uint8>(ConditionKey);
 		auto const HasCondition = (State & Bit) == Bit;
 		if (HasCondition != ConditionValue) return false;

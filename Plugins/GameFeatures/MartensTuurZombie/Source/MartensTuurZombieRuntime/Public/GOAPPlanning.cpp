@@ -1,6 +1,7 @@
 #include "GOAPPlanning.h"
 #include <utility>
 #include <queue>
+#include <unordered_map>
 
 #include "StudentPerceptor.h"
 
