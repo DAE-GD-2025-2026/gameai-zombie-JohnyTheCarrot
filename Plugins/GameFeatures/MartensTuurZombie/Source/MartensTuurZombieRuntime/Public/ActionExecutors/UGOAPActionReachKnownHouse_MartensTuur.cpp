@@ -30,7 +30,7 @@ void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* World
 EGOAPExecutorResult UGOAPActionReachKnownHouse_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
 {
-	if (FVector::DistSquared(GetOwner()->GetActorLocation(), HouseLocation * HouseLocation) <= AcceptanceRadius)
+	if (FVector::DistSquared(GetOwner()->GetActorLocation(), HouseLocation) <= AcceptanceRadius * AcceptanceRadius)
 	{
 		return EGOAPExecutorResult::Success;
 	}

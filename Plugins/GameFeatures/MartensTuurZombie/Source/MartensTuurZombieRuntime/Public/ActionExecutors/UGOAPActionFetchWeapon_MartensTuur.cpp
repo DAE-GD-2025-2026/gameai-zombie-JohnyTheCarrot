@@ -34,7 +34,7 @@ void UGOAPActionFetchWeapon_MartensTuur::Begin_Implementation(UObject* WorldCont
 EGOAPExecutorResult UGOAPActionFetchWeapon_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
 {
-	if (FVector::DistSquared(GetOwner()->GetActorLocation(), CurrentDestination * CurrentDestination) <= AcceptanceRadius)
+	if (FVector::DistSquared(GetOwner()->GetActorLocation(), CurrentDestination) <= AcceptanceRadius * AcceptanceRadius)
 	{
 		return EGOAPExecutorResult::Success;
 	}
