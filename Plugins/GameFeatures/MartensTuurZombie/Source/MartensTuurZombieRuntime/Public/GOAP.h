@@ -65,7 +65,6 @@ struct FGOAPState_Martens_Tuur
 		bool FreeSlots{};
 	} InventoryContains;
 	
-	[[nodiscard]]
 	bool UpdateFlags();
 };
 

@@ -70,14 +70,7 @@ void UStudentPerceptor::RefreshSurvivorState()
 		return Item == nullptr;
 	});
 	
-	// TODO: enemies
-	
-	auto bDidFlagsChange = GoapComp->State.UpdateFlags();
-	if (bDidFlagsChange)
-	{
-		// auto const NewPlan = GoapComp->Plan(GoapComp->State, GoapComp->CurrentGoal.Get());
-		// GoapComp->ActivatePlan(NewPlan);
-	}
+	GoapComp->State.UpdateFlags();
 }
 
 UStudentPerceptor::UStudentPerceptor()
