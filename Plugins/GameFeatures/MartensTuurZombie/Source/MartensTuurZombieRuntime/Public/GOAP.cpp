@@ -9,13 +9,15 @@ bool FGOAPState_Martens_Tuur::UpdateFlags()
 	
 	auto const SetFlag = [this, &IsFlagsDirty](EGOAPFlags_Martens_Tuur Flag, bool Value)
 	{
-		auto const CurrentValue = (Flags & Flag) == Flag;
+		auto const Bit = 1u << static_cast<uint8>(Flag);
+		
+		auto const CurrentValue = (Flags & Bit) == Bit;
 		if (CurrentValue != Value) IsFlagsDirty = true;
 		
 		if (Value)
-			EnumAddFlags(Flags, Flag);
+			Flags |= Bit;
 		else
-			EnumRemoveFlags(Flags, Flag);
+			Flags &= ~Bit;
 	};
 	
 	// State Stamina: CurrentStamina / MaxStamina
@@ -28,6 +30,7 @@ bool FGOAPState_Martens_Tuur::UpdateFlags()
 	SetFlag(EGOAPFlags_Martens_Tuur::IsTired, Stamina < TirednessStaminaPercentageThreshold);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasFood, InventoryContains.Food);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasWeapon, InventoryContains.Weapon);
+	SetFlag(EGOAPFlags_Martens_Tuur::HasMedkit, InventoryContains.Medkit);
 	
 	return IsFlagsDirty;
 }
@@ -68,30 +71,31 @@ float UGoal::GetPriority(UHealthComponent *HealthComponent, UStaminaComponent *S
 	return ModifierValue;
 }
 
-float UGoal::GetDiscontentmentScore(EGOAPFlags_Martens_Tuur State) const
+float UGoal::GetDiscontentmentScore(EGOAPFlags_Value State) const
 {
 	float Discontentment = 0.f;
 	for (auto const &[StateKey, Value] : Conditions)
 	{
-		if (EnumHasAllFlags(State, StateKey) == Value)
+		auto const Bit = 1u << static_cast<uint8>(StateKey);
+		if ((State & Bit) == Bit)
 			Discontentment += 1.f;
 	}
 	
 	return Discontentment;
 }
 
-bool UGoal::IsSatisfied(EGOAPFlags_Martens_Tuur State) const
+bool UGoal::IsSatisfied(EGOAPFlags_Value State) const
 {
-	EGOAPFlags_Martens_Tuur FinalDesiredState{};
+	EGOAPFlags_Value FinalDesiredState{};
 	for (auto const &[StateKey, Value] : Conditions)
 	{
 		if (Value)
-			EnumAddFlags(FinalDesiredState, StateKey);
+			FinalDesiredState |= 1u << static_cast<uint8>(StateKey);
 		else
-			EnumRemoveFlags(FinalDesiredState, StateKey);
+			FinalDesiredState &= ~(1u << static_cast<uint8>(StateKey));
 	}
 	
-	return EnumHasAllFlags(State, FinalDesiredState);
+	return (State & FinalDesiredState) == FinalDesiredState;
 }
 
 void UGOAPActionExecutor::BeginPlay()
@@ -114,7 +118,7 @@ void UGOAPActionExecutor::Begin_Implementation(UObject* WorldContextObject, AAIC
 {
 }
 
-EGOAPFlags_Martens_Tuur UGOAPActionAsset::SimulateApplication(EGOAPFlags_Martens_Tuur Current) const
+EGOAPFlags_Value UGOAPActionAsset::SimulateApplication(EGOAPFlags_Value Current) const
 {
 	auto Result{Current};
 	
@@ -126,7 +130,7 @@ EGOAPFlags_Martens_Tuur UGOAPActionAsset::SimulateApplication(EGOAPFlags_Martens
 	return Result;
 }
 
-bool UGOAPActionAsset::CanExecute(EGOAPFlags_Martens_Tuur State) const
+bool UGOAPActionAsset::CanExecute(EGOAPFlags_Value State) const
 {
 	UE_LOG(LogTemp, Warning, TEXT("Checking CanExecute..."));
 	for (auto const [ConditionKey, ConditionValue] : Preconditions)
@@ -135,26 +139,27 @@ bool UGOAPActionAsset::CanExecute(EGOAPFlags_Martens_Tuur State) const
 			StaticEnum<EGOAPFlags_Martens_Tuur>()->GetNameStringByValue(
 				static_cast<int64>(ConditionKey)
 			);
-		auto const HasCondition = EnumHasAllFlags(State, ConditionKey);
+		auto const Bit = 1u << static_cast<uint8>(ConditionKey);
+		auto const HasCondition = (State & Bit) == Bit;
 		UE_LOG(LogTemp, Warning, TEXT("Expects %s to be %s, is %s."), *Name, *FString{ConditionValue ? "True" : "False"}, *FString{HasCondition ? "True" : "False"});
-		if (EnumHasAllFlags(State, ConditionKey) != ConditionValue) return false;
+		if (HasCondition != ConditionValue) return false;
 	}
 	
 	return true;
 }
 
-bool UGOAPActionAsset::HasAchievedEffects(EGOAPFlags_Martens_Tuur State) const
+bool UGOAPActionAsset::HasAchievedEffects(EGOAPFlags_Value State) const
 {
-	EGOAPFlags_Martens_Tuur FinalDesiredState{};
+	EGOAPFlags_Value FinalDesiredState{};
 	for (auto const &[StateKey, Value] : Effects)
 	{
 		if (Value)
-			EnumAddFlags(FinalDesiredState, StateKey);
+			FinalDesiredState |= 1u << static_cast<uint8>(StateKey);
 		else
-			EnumRemoveFlags(FinalDesiredState, StateKey);
+			FinalDesiredState &= ~(1u << static_cast<uint8>(StateKey));
 	}
 	
-	return EnumHasAllFlags(State, FinalDesiredState);
+	return (State & FinalDesiredState) == FinalDesiredState;
 }
 
 UGOAPActionExecutor* UGOAPActionAsset::GetAssociatedExecutorFromActor(AActor const* Actor) const

@@ -6,18 +6,18 @@ struct FNode final
 {
 	TObjectPtr<UGOAPActionAsset> Action;
 	
-	EGOAPFlags_Martens_Tuur State;
+	EGOAPFlags_Value State;
 	
 	float CostFromStart{0.f};
 	float HeuristicCost;
 	
-	FNode(TObjectPtr<UGOAPActionAsset> ActionIn, EGOAPFlags_Martens_Tuur StateIn, float CostIn, UGoal const &Goal)
+	FNode(TObjectPtr<UGOAPActionAsset> ActionIn, EGOAPFlags_Value StateIn, float CostIn, UGoal const &Goal)
 		: Action{ActionIn}
 		, State{Action->SimulateApplication(StateIn)}
 		, CostFromStart{CostIn}
 		, HeuristicCost{Goal.GetDiscontentmentScore(State)} {}
 	
-	FNode(EGOAPFlags_Martens_Tuur StartState, UGoal const &Goal)
+	FNode(EGOAPFlags_Value StartState, UGoal const &Goal)
 		: Action{nullptr}
 		, State{StartState}
 		, HeuristicCost{Goal.GetDiscontentmentScore(State)}
@@ -110,12 +110,12 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(FGOAPState_Martens_Tuur StartState, UGoal 
 	
 	struct FCameFrom final
 	{
-		EGOAPFlags_Martens_Tuur PreviousState;
+		EGOAPFlags_Value PreviousState;
 		UGOAPActionAsset* Action;
 	};
 	
-	std::unordered_map<EGOAPFlags_Martens_Tuur, FCameFrom> CameFromAction;
-	std::unordered_map<EGOAPFlags_Martens_Tuur, float> GScores;
+	std::unordered_map<EGOAPFlags_Value, FCameFrom> CameFromAction;
+	std::unordered_map<EGOAPFlags_Value, float> GScores;
 	GScores[StartState.Flags] = 0.f;
 	
 	UE_LOG(LogTemp, Warning, TEXT("Before start of while"));
