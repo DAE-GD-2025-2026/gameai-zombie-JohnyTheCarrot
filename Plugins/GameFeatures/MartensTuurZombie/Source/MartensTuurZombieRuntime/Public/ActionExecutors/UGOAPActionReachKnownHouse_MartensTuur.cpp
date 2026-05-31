@@ -2,7 +2,6 @@
 
 #include "Navigation/PathFollowingComponent.h"
 
-constexpr static float AcceptanceRadius{30.f};
 
 void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
@@ -30,6 +29,7 @@ void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* World
 EGOAPExecutorResult UGOAPActionReachKnownHouse_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
 {
+	constexpr float AcceptanceRadius{30.f};
 	if (FVector::DistSquared(GetOwner()->GetActorLocation(), House.Bounds.Origin) <= AcceptanceRadius * AcceptanceRadius)
 	{
 		return EGOAPExecutorResult::Success;

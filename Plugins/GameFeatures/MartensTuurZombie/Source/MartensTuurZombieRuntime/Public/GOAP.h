@@ -1,5 +1,7 @@
 #pragma once
 #include <memory>
+#include "Common/HealthComponent.h"
+#include "Common/StaminaComponent.h"
 
 #include "AIController.h"
 #include "GOAP.generated.h"
@@ -67,6 +69,37 @@ struct FCondition final
 	}
 };
 
+UENUM(BlueprintType)
+enum class EPriorityModifierValue : uint8
+{
+	OneMinusHealthPercentage,
+	OneMinusStaminaPercentage,
+};
+
+UENUM(BlueprintType)
+enum class EPriorityModifierType : uint8
+{
+	Additive,
+	IncreaseScaleBy,
+	AddExponentialValue,
+	MultiplyModifierByConstant,
+};
+
+USTRUCT(BlueprintType)
+struct FPriorityModifier
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly)
+	EPriorityModifierType Scaling{EPriorityModifierType::Additive};
+	
+	UPROPERTY(EditDefaultsOnly)
+	EPriorityModifierValue Value;
+	
+	UPROPERTY(EditDefaultsOnly)
+	float MultiplyBy{1.f};
+};
+
 UCLASS(BlueprintType)
 class UGoal final : public UPrimaryDataAsset
 {
@@ -79,6 +112,15 @@ public:
 	// TODO: narrow down edit, read/write etc
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GOAP")
 	TArray<FCondition> Conditions;
+	
+	UPROPERTY(EditDefaultsOnly, Category="GOAP")
+	float BasePriority{1.f};
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GOAP")
+	TArray<FPriorityModifier> PriorityModifiers{};
+	
+	[[nodiscard]]
+	float GetPriority(UHealthComponent *HealthComponent, UStaminaComponent *StaminaComponent) const;
 	
 	[[nodiscard]]
 	// The lower the return value, the closer we adhere to the desired world state (i.e. the conditions).
@@ -130,11 +172,14 @@ public:
 	
 	virtual void BeginPlay() override;
 	
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent)
 	void Begin(UObject *WorldContextObject, AAIController *Controller);
 	
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent)
 	EGOAPExecutorResult ExecutorTick(UObject *WorldContextObject, AAIController *Controller);
+	
+	UFUNCTION()
+	virtual void OnFinish() {};
 	
 	UFUNCTION(BlueprintCallable)
 	void Finish(EGOAPExecutorResult Result);

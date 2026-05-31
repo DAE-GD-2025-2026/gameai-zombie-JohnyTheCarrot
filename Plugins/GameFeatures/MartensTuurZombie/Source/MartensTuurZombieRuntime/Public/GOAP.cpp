@@ -1,5 +1,8 @@
 #include "GOAP.h"
 
+#include "Common/HealthComponent.h"
+#include "Common/StaminaComponent.h"
+
 void FGOAPState_Martens_Tuur::UpdateFlags()
 {
 	bool IsFlagsDirty = false;
@@ -28,6 +31,42 @@ void FGOAPState_Martens_Tuur::UpdateFlags()
 	{
 		// TODO: flags changed, check if our plan can still work
 	}
+}
+
+float UGoal::GetPriority(UHealthComponent *HealthComponent, UStaminaComponent *StaminaComponent) const
+{
+	float ModifierValue = BasePriority;
+	
+	for (auto const &Modifier : PriorityModifiers)
+	{
+		float Value = 0.f;
+		switch (Modifier.Value)
+		{
+		case EPriorityModifierValue::OneMinusHealthPercentage:
+			Value = 1.f - static_cast<float>(HealthComponent->GetHealth()) / static_cast<float>(HealthComponent->GetMaxHealth());
+			break;
+		case EPriorityModifierValue::OneMinusStaminaPercentage:
+			Value = 1.f - StaminaComponent->GetCurrentStamina() / StaminaComponent->GetMaxStamina();
+			break;
+		}
+		
+		switch (Modifier.Scaling)
+		{
+		case EPriorityModifierType::Additive:
+			ModifierValue += Value;
+			break;
+		case EPriorityModifierType::IncreaseScaleBy:
+			ModifierValue *= 1.f + Value;
+			break;
+		case EPriorityModifierType::AddExponentialValue:
+			ModifierValue = FMath::Pow(ModifierValue, 1.f + Value);
+			break;
+		}
+		
+		ModifierValue *= Modifier.MultiplyBy;
+	}
+	
+	return ModifierValue;
 }
 
 float UGoal::GetDiscontentmentScore(EGOAPFlags_Martens_Tuur State) const

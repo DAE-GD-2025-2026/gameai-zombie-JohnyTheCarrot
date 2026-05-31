@@ -1,6 +1,7 @@
 #pragma once
 #include "GOAP.h"
-
+#include "Common/HealthComponent.h"
+#include "Common/StaminaComponent.h"
 #include "GOAPPlanning.generated.h"
 
 using GoapGraphNode = TObjectPtr<UGOAPActionAsset>;
@@ -9,6 +10,12 @@ UCLASS(Blueprintable, ClassGroup=(AI), meta=(BlueprintSpawnableComponent))
 class MARTENSTUURZOMBIERUNTIME_API UGoapGraph : public UActorComponent
 {
 	void NextAction();
+	
+	UPROPERTY()
+	UHealthComponent *HealthComp{};
+	
+	UPROPERTY()
+	UStaminaComponent *StaminaComp{};
 	
 public:
 	UGoapGraph();
@@ -36,10 +43,15 @@ public:
 	TArray<UGOAPActionAsset*> CurrentPlan;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GOAP")
-	TObjectPtr<UGoal> CurrentGoal{};
+	TWeakObjectPtr<UGoal> CurrentGoal{};
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GOAP")
+	TArray<TObjectPtr<UGoal>> Goals{};
 	
 	UPROPERTY()
 	int CurrentActionIndex{-1};
+	
+	void ActivateHighestPriorityGoal();
 	
 	[[nodiscard]]
 	UGOAPActionAsset *GetCurrentAction() const;

@@ -23,6 +23,8 @@ public:
 	virtual void Begin_Implementation(UObject* WorldContextObject, AAIController* Controller) override;
 	
 	virtual EGOAPExecutorResult ExecutorTick_Implementation(UObject* WorldContextObject, AAIController* Controller) override;
+	
+	virtual void OnFinish() override;
 };
 
 UCLASS()

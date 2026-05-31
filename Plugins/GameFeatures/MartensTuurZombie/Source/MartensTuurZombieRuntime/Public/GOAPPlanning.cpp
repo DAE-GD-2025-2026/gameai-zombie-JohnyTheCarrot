@@ -53,6 +53,9 @@ void UGoapGraph::NextAction()
 {
 	if (CurrentPlan.IsValidIndex(CurrentActionIndex + 1))
 	{
+		if (auto const CurrentAction = GetCurrentAction())
+			CurrentAction->GetAssociatedExecutorFromActor(GetOwner())->OnFinish();
+		
 		++CurrentActionIndex;
 		
 		auto CurrentExecutor = GetCurrentAction()->GetAssociatedExecutorFromActor(GetOwner());
@@ -66,7 +69,9 @@ void UGoapGraph::NextAction()
 	}
 	
 	UE_LOG(LogTemp, Warning, TEXT("Plan completed!"));
-	CurrentPlan = {};
+	
+	CurrentGoal = {};
+	ActivateHighestPriorityGoal();
 }
 
 UGoapGraph::UGoapGraph()
@@ -77,11 +82,18 @@ UGoapGraph::UGoapGraph()
 
 void UGoapGraph::InitializeGoap()
 {
+	HealthComp = GetOwner()->GetComponentByClass<UHealthComponent>();
+	check(HealthComp);
+	
+	StaminaComp = GetOwner()->GetComponentByClass<UStaminaComponent>();
+	check(StaminaComp);
+	
 	for (auto const &ActionAsset : AvailableActions)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Registring action %s executor"), *ActionAsset->Name.ToString())
 		GetOwner()->AddComponentByClass(ActionAsset->ExecutorClass, false, FTransform::Identity, false);
 	}
+	ActivateHighestPriorityGoal();
 }
 
 UGoapGraph::GoapPlan UGoapGraph::Plan(FGOAPState_Martens_Tuur StartState, UGoal *Goal) const
@@ -186,6 +198,43 @@ void UGoapGraph::ActivatePlan(TArray<UGOAPActionAsset*> const& Plan)
 	NextAction();
 }
 
+void UGoapGraph::ActivateHighestPriorityGoal()
+{
+	TWeakObjectPtr<UGoal> HighestPriorityGoal{nullptr};
+	float HighestPriorityFound = -1.f;
+	
+	int32 DebugKey = 15;
+	for (auto const &Goal : Goals)
+	{
+		auto GoalPriority = Goal->GetPriority(HealthComp, StaminaComp);
+		
+		if (Goal->IsSatisfied(State.Flags)) GoalPriority = 0.f;
+		GEngine->AddOnScreenDebugMessage(DebugKey, 1.f, FColor::Green, 
+		FString::Printf(TEXT("goal \"%s\", prio %f"), *Goal->Name.ToString(), GoalPriority));
+		
+		++DebugKey;
+		if (GoalPriority > HighestPriorityFound)
+		{
+			HighestPriorityFound = GoalPriority;
+			HighestPriorityGoal = Goal.Get();
+		}
+	}
+	
+	if (CurrentGoal == HighestPriorityGoal)
+		return;
+	
+	GEngine->AddOnScreenDebugMessage(DebugKey, 1.f, FColor::Green, 
+	FString::Printf(TEXT("highest goal: \"%s\", prio %f"), *HighestPriorityGoal->Name.ToString(), HighestPriorityFound));
+	auto const OldGoal = CurrentGoal;
+	CurrentGoal = HighestPriorityGoal;
+	
+	ActivatePlan(Plan(State, CurrentGoal.Get()));
+	
+	if (OldGoal == nullptr) return;
+	
+	UE_LOG(LogTemp, Warning, TEXT("Changed goal from %s because goal %s became higher priority"), *OldGoal->Name.ToString(), *CurrentGoal->Name.ToString());
+}
+
 UGOAPActionAsset* UGoapGraph::GetCurrentAction() const
 {
 	// index 0 is invalid if the plan is empty
@@ -198,6 +247,9 @@ void UGoapGraph::TickComponent(float DeltaTime, enum ELevelTick TickType,
                                              FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	// Yes, in tick, to account for changing conditions.
+	ActivateHighestPriorityGoal();
 	
 	if (CurrentPlan.IsEmpty()) return;
 	
@@ -232,7 +284,7 @@ void UGoapGraph::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	case EGOAPExecutorResult::Failure:
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Action failure, replanning..."));
-			auto const NewPlan = Plan(State, CurrentGoal);
+			auto const NewPlan = Plan(State, CurrentGoal.Get());
 			ActivatePlan(NewPlan);
 			break;
 		}
