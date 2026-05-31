@@ -63,6 +63,7 @@ void UGoapGraph::NextAction()
 		UE_LOG(LogTemp, Warning, TEXT("Begin action '%s'..."), *GetCurrentAction()->Name.ToString());
 		auto const Controller = Cast<APawn>(GetOwner())->GetController();
 		auto const AIController = Cast<AAIController>(Controller);
+		CurrentExecutor->Status = EGOAPExecutorResult::Busy;
 		CurrentExecutor->Begin(AIController, AIController);
 		
 		return;
@@ -123,9 +124,6 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(FGOAPState_Martens_Tuur StartState, UGoal 
 		UE_LOG(LogTemp, Warning, TEXT("Start of while"));
 		auto const Current = OpenQueue.top();
 		OpenQueue.pop();
-		
-		// if (ClosedSet.contains(Current.State))
-		// 	continue;
 		
 		UE_LOG(LogTemp, Warning, TEXT("Check if goal satisfied"));
 		if (Goal->IsSatisfied(Current.State))
@@ -191,6 +189,12 @@ UGoapGraph::GoapPlan UGoapGraph::Plan(FGOAPState_Martens_Tuur StartState, UGoal 
 
 void UGoapGraph::ActivatePlan(TArray<UGOAPActionAsset*> const& Plan)
 {
+	if (auto const CurrentAction = GetCurrentAction())
+	{
+		auto const Executor = CurrentAction->GetAssociatedExecutorFromActor(GetOwner());
+		check(Executor);
+		Executor->OnFinish();
+	}
 	CurrentPlan = std::move(Plan);
 	CurrentActionIndex = -1;
 	

@@ -45,7 +45,14 @@ struct FGOAPState_Martens_Tuur
 		int EnemiesNum{};
 	} AwareOf;
 	
-	void UpdateFlags();
+	struct
+	{
+		bool Food{};
+		bool Weapon{};
+	} InventoryContains;
+	
+	[[nodiscard]]
+	bool UpdateFlags();
 };
 
 USTRUCT(BlueprintType)

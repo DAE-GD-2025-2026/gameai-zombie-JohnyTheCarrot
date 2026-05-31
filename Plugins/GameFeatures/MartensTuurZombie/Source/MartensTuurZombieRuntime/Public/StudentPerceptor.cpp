@@ -3,6 +3,7 @@
 
 #include "StudentPerceptor.h"
 
+#include "Common/InventoryComponent.h"
 #include "Items/BaseItem.h"
 #include "Village/House/House.h"
 
@@ -19,27 +20,30 @@ void UStudentPerceptor::RefreshSurvivorState()
 	GoapComp->State.Health = HealthComp->GetHealth() / HealthComp->GetMaxHealth();
 	GoapComp->State.Stamina = StaminaComp->GetCurrentStamina() / StaminaComp->GetMaxStamina();
 	GoapComp->State.AwareOf.WeaponsNum = KnownWeapons.Num();
-	GoapComp->State.AwareOf.HousesNum = KnownHouses.Num();
+	GoapComp->State.AwareOf.HousesNum = CheckedHouses.Num();
 	GoapComp->State.AwareOf.FoodNum = KnownFoods.Num();
 	GoapComp->State.AwareOf.MedkitsNum = KnownMedkits.Num();
-	GoapComp->State.AwareOf.UncheckedHousesNum = 0;
-	for (auto const &House : KnownHouses)
+	GoapComp->State.AwareOf.UncheckedHousesNum = UncheckedHouses.Num();
+	
+	GoapComp->State.InventoryContains.Food = InventoryComp->GetInventory().ContainsByPredicate([](ABaseItem const *Item)
 	{
-		if (!House.HasChecked)
-			++GoapComp->State.AwareOf.UncheckedHousesNum;
-	}
+		if (!Item) return false;
+		return Item->GetItemType() == EItemType::Food;
+	});
+	GoapComp->State.InventoryContains.Weapon = InventoryComp->GetInventory().ContainsByPredicate([](ABaseItem const *Item)
+	{
+		if (!Item) return false;
+		return Item->GetItemType() == EItemType::Pistol || Item->GetItemType() == EItemType::Shotgun;
+	});
 	
 	// TODO: enemies
 	
-	GoapComp->State.UpdateFlags();
-	
-	// for (auto const &Item : KnownItems)
-	// {
-	// 	if (Item.Type == EItemType::Pistol || Item.Type == EItemType::Shotgun)
-	// 		EnumAddFlags(SurvivorState, EGOAPFlags_Martens_Tuur::HasFoundWeapon);
-	// }
-	// if (!KnownHouses.IsEmpty())
-	// 	EnumAddFlags(SurvivorState, EGOAPFlags_Martens_Tuur::HasFoundHouse);
+	auto bDidFlagsChange = GoapComp->State.UpdateFlags();
+	if (bDidFlagsChange)
+	{
+		// auto const NewPlan = GoapComp->Plan(GoapComp->State, GoapComp->CurrentGoal.Get());
+		// GoapComp->ActivatePlan(NewPlan);
+	}
 }
 
 UStudentPerceptor::UStudentPerceptor()
@@ -64,15 +68,13 @@ TWeakObjectPtr<AWeapon> UStudentPerceptor::GetClosestWeapon() const
 	return Closest;
 }
 
-FKnownHouse_MartensTuur *UStudentPerceptor::GetClosestHouse(bool bAllowChecked)
+FKnownHouse_MartensTuur *UStudentPerceptor::GetClosestHouse()
 {
 	FKnownHouse_MartensTuur* Closest{};
 	auto const ActorPos = GetOwner()->GetActorLocation();
 
-	for (auto &House : KnownHouses)
+	for (auto &House : UncheckedHouses)
 	{
-		if (House.HasChecked && !bAllowChecked) continue;
-		
 		// This doesn't take into account cases where the direct distance is lower, but the path to get there is longer...
 		// but honestly, it's an organic character, it doesn't need to be perfect...
 		if (Closest == nullptr || FVector::DistSquared(ActorPos, House.Bounds.Origin) < FVector::DistSquared(ActorPos, Closest->Bounds.Origin))
@@ -114,6 +116,9 @@ void UStudentPerceptor::BeginPlay()
 	
 	StaminaComp = GetOwner()->GetComponentByClass<UStaminaComponent>();
 	check(StaminaComp);
+	
+	InventoryComp = GetOwner()->GetComponentByClass<UInventoryComponent>();
+	check(InventoryComp);
 }
 
 void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -124,11 +129,12 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	if (AHouse *House = Cast<AHouse>(Actor))
 	{
 		FKnownHouse_MartensTuur const KnownHouse{.Bounds = House->GetBounds()};
-		if (KnownHouses.Find(KnownHouse) != INDEX_NONE) return;
+		if (UncheckedHouses.Find(KnownHouse) != INDEX_NONE) return;
+		if (CheckedHouses.Find(KnownHouse) != INDEX_NONE) return;
 		
-		GEngine->AddOnScreenDebugMessage(6, 1.f, FColor::Yellow, 
+		GEngine->AddOnScreenDebugMessage(7, 5.f, FColor::Yellow, 
 		FString::Printf(TEXT("Saw House!!!!!")));
-		KnownHouses.Add(KnownHouse);
+		UncheckedHouses.Add(KnownHouse);
 	}
 	else if (ABaseItem *Item = Cast<ABaseItem>(Actor))
 	{

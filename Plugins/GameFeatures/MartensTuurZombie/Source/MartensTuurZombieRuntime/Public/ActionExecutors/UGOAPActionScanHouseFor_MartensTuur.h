@@ -10,8 +10,7 @@ class UGOAPActionScanHouseFor_MartensTuur : public UGOAPActionExecutor
 	GENERATED_BODY()
 	
 protected:
-	UPROPERTY()
-	FKnownHouse_MartensTuur House;
+	FKnownHouse_MartensTuur *House{};
 	
 	UPROPERTY()
 	UStudentPerceptor *CachedStudentPerceptor{};

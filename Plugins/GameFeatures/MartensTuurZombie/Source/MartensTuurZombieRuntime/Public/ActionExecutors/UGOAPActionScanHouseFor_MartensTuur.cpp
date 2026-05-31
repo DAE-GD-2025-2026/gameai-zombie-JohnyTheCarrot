@@ -10,16 +10,16 @@ void UGOAPActionScanHouseFor_MartensTuur::Begin_Implementation(UObject* WorldCon
 	CachedStudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>();
 	check(CachedStudentPerceptor != nullptr);
 	
-	auto const ClosestUncheckedHouse = CachedStudentPerceptor->GetClosestHouse(false);
+	auto const ClosestUncheckedHouse = CachedStudentPerceptor->GetClosestHouse();
 	if (ClosestUncheckedHouse == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No unchecked houses, failing."));
 		Finish(EGOAPExecutorResult::Failure);
 		return;
 	}
-	House = *ClosestUncheckedHouse;
+	House = ClosestUncheckedHouse;
 	
-	auto const MoveResult = Controller->MoveToLocation(House.Bounds.Origin, 10.f);
+	auto const MoveResult = Controller->MoveToLocation(House->Bounds.Origin, 10.f);
 	if (MoveResult == EPathFollowingRequestResult::Type::Failed)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Couldn't reach house location, failing."));
@@ -34,7 +34,7 @@ EGOAPExecutorResult UGOAPActionScanHouseFor_MartensTuur::ExecutorTick_Implementa
 		return EGOAPExecutorResult::Success;
 	
 	constexpr float AcceptanceRadius{50.f};
-	if (FVector::DistSquared(GetOwner()->GetActorLocation(), House.Bounds.Origin) <= AcceptanceRadius * AcceptanceRadius)
+	if (FVector::DistSquared(GetOwner()->GetActorLocation(), House->Bounds.Origin) <= AcceptanceRadius * AcceptanceRadius)
 		return EGOAPExecutorResult::Failure;
 	
 	return EGOAPExecutorResult::Busy;
@@ -43,15 +43,19 @@ EGOAPExecutorResult UGOAPActionScanHouseFor_MartensTuur::ExecutorTick_Implementa
 void UGOAPActionScanHouseFor_MartensTuur::OnFinish()
 {
 	auto const CurrentPos = GetOwner()->GetActorLocation();
+	UE_LOG(LogTemp, Warning, TEXT("Maybe marking house as checked"));
 	
 	// check if inside house, if so, mark haschecked. do this because we may have found our item on the way, which wouldn't make the house checked
-	if (FMath::Abs(CurrentPos.X - House.Bounds.Origin.X) >= House.Bounds.Extent.X)
+	if (FMath::Abs(CurrentPos.X - House->Bounds.Origin.X) >= House->Bounds.Extent.X)
 		return;
 	
-	if (FMath::Abs(CurrentPos.Y - House.Bounds.Origin.Y) >= House.Bounds.Extent.Y)
+	if (FMath::Abs(CurrentPos.Y - House->Bounds.Origin.Y) >= House->Bounds.Extent.Y)
 		return;
 	
-	House.HasChecked = true;
+	UE_LOG(LogTemp, Warning, TEXT("Marking house as checked"));
+	auto const HouseDeref = *House;
+	CachedStudentPerceptor->UncheckedHouses.Remove(HouseDeref);
+	CachedStudentPerceptor->CheckedHouses.Add(HouseDeref);
 }
 
 void UGoapActionScanHouseForWeapon_MartensTuur::Begin_Implementation(UObject* WorldContextObject,

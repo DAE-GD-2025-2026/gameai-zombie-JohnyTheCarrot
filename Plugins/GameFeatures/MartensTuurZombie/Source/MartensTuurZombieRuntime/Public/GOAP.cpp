@@ -3,7 +3,7 @@
 #include "Common/HealthComponent.h"
 #include "Common/StaminaComponent.h"
 
-void FGOAPState_Martens_Tuur::UpdateFlags()
+bool FGOAPState_Martens_Tuur::UpdateFlags()
 {
 	bool IsFlagsDirty = false;
 	
@@ -26,11 +26,10 @@ void FGOAPState_Martens_Tuur::UpdateFlags()
 	SetFlag(EGOAPFlags_Martens_Tuur::KnowsUncheckedHouse, AwareOf.UncheckedHousesNum > 0);
 	SetFlag(EGOAPFlags_Martens_Tuur::SeesEnemy, AwareOf.EnemiesNum > 0);
 	SetFlag(EGOAPFlags_Martens_Tuur::IsTired, Stamina < TirednessStaminaPercentageThreshold);
+	SetFlag(EGOAPFlags_Martens_Tuur::HasFood, InventoryContains.Food);
+	SetFlag(EGOAPFlags_Martens_Tuur::HasWeapon, InventoryContains.Weapon);
 	
-	if (IsFlagsDirty)
-	{
-		// TODO: flags changed, check if our plan can still work
-	}
+	return IsFlagsDirty;
 }
 
 float UGoal::GetPriority(UHealthComponent *HealthComponent, UStaminaComponent *StaminaComponent) const

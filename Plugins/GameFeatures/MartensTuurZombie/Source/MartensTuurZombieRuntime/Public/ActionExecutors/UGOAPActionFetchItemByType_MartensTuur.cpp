@@ -51,6 +51,7 @@ EGOAPExecutorResult UGOAPActionFetchItemByType_MartensTuur::ExecutorTick_Impleme
 		
 		if (CachedInventory->GrabItem(FreeSlot, Target.Get()))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Picking up item"));
 			RemoveFromKnown();
 			return EGOAPExecutorResult::Success;
 		}

@@ -8,8 +8,6 @@ struct FKnownHouse_MartensTuur
 	GENERATED_BODY()
 	
 	FHouseBounds Bounds;
-	// TODO: may need to re-check a while after we take some items, in case a new item spawned
-	bool HasChecked{false};
 	
 	[[nodiscard]]
 	bool operator==(const FKnownHouse_MartensTuur& Other) const

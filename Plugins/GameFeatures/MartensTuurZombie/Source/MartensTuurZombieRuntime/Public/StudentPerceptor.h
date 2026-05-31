@@ -39,7 +39,13 @@ public:
 	UStaminaComponent *StaminaComp{};
 	
 	UPROPERTY()
-	TArray<FKnownHouse_MartensTuur> KnownHouses{};
+	UInventoryComponent *InventoryComp{};
+	
+	UPROPERTY()
+	TArray<FKnownHouse_MartensTuur> CheckedHouses{};
+	
+	UPROPERTY()
+	TArray<FKnownHouse_MartensTuur> UncheckedHouses{};
 	
 	UPROPERTY()
 	TArray<TWeakObjectPtr<AWeapon>> KnownWeapons{};
@@ -54,7 +60,7 @@ public:
 	TWeakObjectPtr<AWeapon> GetClosestWeapon() const;
 	
 	[[nodiscard]]
-	FKnownHouse_MartensTuur *GetClosestHouse(bool bAllowChecked = true);
+	FKnownHouse_MartensTuur *GetClosestHouse();
 	
 	[[nodiscard]]
 	TWeakObjectPtr<AFood> GetClosestFood() const;
