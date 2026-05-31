@@ -11,6 +11,7 @@
 #include "Components/ActorComponent.h"
 #include "Items/Food.h"
 #include "Items/ItemType.h"
+#include "Items/Medkit.h"
 #include "Items/Weapon.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -54,10 +55,13 @@ public:
 	TArray<TWeakObjectPtr<AFood>> KnownFoods{};
 	
 	UPROPERTY()
-	TArray<FVector> KnownMedkits{};
+	TArray<TWeakObjectPtr<AMedkit>> KnownMedkits{};
 	
 	[[nodiscard]]
 	TWeakObjectPtr<AWeapon> GetClosestWeapon() const;
+	
+	[[nodiscard]]
+	TWeakObjectPtr<AMedkit> GetClosestMedkit() const;
 	
 	[[nodiscard]]
 	FKnownHouse_MartensTuur *GetClosestHouse();

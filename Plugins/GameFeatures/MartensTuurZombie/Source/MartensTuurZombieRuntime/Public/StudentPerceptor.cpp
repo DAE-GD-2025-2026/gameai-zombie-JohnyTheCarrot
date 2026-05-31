@@ -35,6 +35,10 @@ void UStudentPerceptor::RefreshSurvivorState()
 		if (!Item) return false;
 		return Item->GetItemType() == EItemType::Pistol || Item->GetItemType() == EItemType::Shotgun;
 	});
+	GoapComp->State.InventoryContains.FreeSlots = InventoryComp->GetInventory().ContainsByPredicate([](ABaseItem const *Item)
+	{
+		return Item == nullptr;
+	});
 	
 	// TODO: enemies
 	
@@ -51,12 +55,30 @@ UStudentPerceptor::UStudentPerceptor()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
+// TODO: get closest has too many variants, reduce repetition!
 TWeakObjectPtr<AWeapon> UStudentPerceptor::GetClosestWeapon() const
 {
 	TWeakObjectPtr<AWeapon> Closest{};
 	auto const ActorPos = GetOwner()->GetActorLocation();
 	
 	for (auto const &Item : KnownWeapons)
+	{
+		// TODO: this doesn't take into account cases where the direct distance is lower, but the path to get there is longer
+		if (Closest == nullptr || FVector::DistSquared(ActorPos, Item->GetActorLocation()) < FVector::DistSquared(ActorPos, Closest->GetActorLocation()))
+		{
+			Closest = Item;
+		}
+	}
+	
+	return Closest;
+}
+
+TWeakObjectPtr<AMedkit> UStudentPerceptor::GetClosestMedkit() const
+{
+	TWeakObjectPtr<AMedkit> Closest{};
+	auto const ActorPos = GetOwner()->GetActorLocation();
+	
+	for (auto const &Item : KnownMedkits)
 	{
 		// TODO: this doesn't take into account cases where the direct distance is lower, but the path to get there is longer
 		if (Closest == nullptr || FVector::DistSquared(ActorPos, Item->GetActorLocation()) < FVector::DistSquared(ActorPos, Closest->GetActorLocation()))
@@ -155,10 +177,10 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		}
 		else if (Type == EItemType::Medkit)
 		{
-			auto const Loc = Item->GetActorLocation();
-			if (KnownMedkits.Find(Loc) != INDEX_NONE) return;
+			auto const Medkit = Cast<AMedkit>(Item);
+			if (KnownMedkits.Find(Medkit) != INDEX_NONE) return;
 			
-			KnownMedkits.Add(Loc);
+			KnownMedkits.Add(Medkit);
 		}
 	}
 	else return;

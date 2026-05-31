@@ -49,3 +49,13 @@ protected:
 	virtual void SelectTarget() override;
 	virtual void RemoveFromKnown() override;
 };
+
+UCLASS()
+class UGOAPActionFetchMedkit_MartensTuur : public UGOAPActionFetchItemByType_MartensTuur
+{
+	GENERATED_BODY()
+	
+protected:
+	virtual void SelectTarget() override;
+	virtual void RemoveFromKnown() override;
+};

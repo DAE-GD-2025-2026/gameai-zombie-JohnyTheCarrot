@@ -82,3 +82,13 @@ void UGOAPActionFetchFood_MartensTuur::RemoveFromKnown()
 	CachedPerceptor->KnownFoods.Remove(Cast<AFood>(Target.Get()));
 }
 
+void UGOAPActionFetchMedkit_MartensTuur::SelectTarget()
+{
+	Target = CachedPerceptor->GetClosestMedkit();
+}
+
+void UGOAPActionFetchMedkit_MartensTuur::RemoveFromKnown()
+{
+	CachedPerceptor->KnownMedkits.Remove(Cast<AMedkit>(Target.Get()));
+}
+

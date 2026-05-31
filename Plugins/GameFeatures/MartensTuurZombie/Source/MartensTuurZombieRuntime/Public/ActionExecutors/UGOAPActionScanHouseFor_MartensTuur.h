@@ -53,3 +53,17 @@ protected:
 	
 	virtual bool IsDone() override;
 };
+
+UCLASS()
+class UGoapActionScanHouseForMedkit_MartensTuur : public UGOAPActionScanHouseFor_MartensTuur
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	int NumKnownMedkitsAtStart{};
+
+protected:
+	virtual void Begin_Implementation(UObject* WorldContextObject, AAIController* Controller) override;
+	
+	virtual bool IsDone() override;
+};

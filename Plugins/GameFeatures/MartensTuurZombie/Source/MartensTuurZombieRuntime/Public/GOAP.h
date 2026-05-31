@@ -21,7 +21,11 @@ enum class EGOAPFlags_Martens_Tuur : uint8
 	HasFoundFood,
 	HasFoundMedkit,
 	
+	HasFoundWeaponWithMoreAmmo,
+	HasFreeInventorySlots,
+	
 	IsTired,
+	IsFullHealth,
 	KnowsUncheckedHouse,
 };
 
@@ -52,6 +56,7 @@ struct FGOAPState_Martens_Tuur
 		bool Food{};
 		bool Weapon{};
 		bool Medkit{};
+		bool FreeSlots{};
 	} InventoryContains;
 	
 	[[nodiscard]]

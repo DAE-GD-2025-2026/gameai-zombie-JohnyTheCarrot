@@ -81,3 +81,15 @@ bool UGoapActionScanHouseForFood_MartensTuur::IsDone()
 {
 	return CachedStudentPerceptor->KnownFoods.Num() > NumKnownFoodsAtStart;
 }
+
+void UGoapActionScanHouseForMedkit_MartensTuur::Begin_Implementation(UObject* WorldContextObject,
+	AAIController* Controller)
+{
+	Super::Begin_Implementation(WorldContextObject, Controller);
+	NumKnownMedkitsAtStart = CachedStudentPerceptor->KnownMedkits.Num();
+}
+
+bool UGoapActionScanHouseForMedkit_MartensTuur::IsDone()
+{
+	return CachedStudentPerceptor->KnownMedkits.Num() > NumKnownMedkitsAtStart;
+}
