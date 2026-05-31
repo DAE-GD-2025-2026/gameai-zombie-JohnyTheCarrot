@@ -3,7 +3,7 @@
 #include <queue>
 #include <unordered_map>
 
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 
 struct FNode final
 {
@@ -56,7 +56,7 @@ void UGoapGraph::NextAction()
 {
 	if (CurrentPlan.IsValidIndex(CurrentActionIndex + 1))
 	{
-		if (auto const Perceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>())
+		if (auto const Perceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>())
 			Perceptor->RefreshSurvivorState();
 		else
 			UE_LOG(LogTemp, Warning, TEXT("NextAction found no perceptor!"));

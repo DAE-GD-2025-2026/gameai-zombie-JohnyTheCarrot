@@ -1,7 +1,7 @@
 #pragma once
 #include "FKnownHouse_MartensTuur.h"
 #include "GOAP.h"
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 #include "UGOAPActionScanHouseFor_MartensTuur.generated.h"
 
 UCLASS()
@@ -13,7 +13,7 @@ protected:
 	FKnownHouse_MartensTuur *House{};
 	
 	UPROPERTY()
-	UStudentPerceptor *CachedStudentPerceptor{};
+	UStudentPerceptor_MartensTuur *CachedStudentPerceptor{};
 	
 	[[nodiscard]]
 	virtual bool IsDone() {return false;};

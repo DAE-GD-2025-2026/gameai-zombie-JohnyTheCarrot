@@ -1,6 +1,6 @@
 #pragma once
 #include "GOAP.h"
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 #include "UGOAPActionReachKnownHouse_MartensTuur.generated.h"
 
 UCLASS()
@@ -14,7 +14,7 @@ class UGOAPActionReachKnownHouse_MartensTuur : public UGOAPActionExecutor
 	AAIController* CachedController;
 	
 	UPROPERTY()
-	UStudentPerceptor *StudentPerceptor;
+	UStudentPerceptor_MartensTuur *StudentPerceptor;
 	
 public:
 	virtual void Begin_Implementation(UObject* WorldContextObject, AAIController* Controller) override;

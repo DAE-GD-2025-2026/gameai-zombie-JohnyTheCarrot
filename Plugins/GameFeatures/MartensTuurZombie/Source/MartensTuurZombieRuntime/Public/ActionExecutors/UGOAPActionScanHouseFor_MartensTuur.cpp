@@ -7,7 +7,7 @@ void UGOAPActionScanHouseFor_MartensTuur::Begin_Implementation(UObject* WorldCon
 {
 	UGOAPActionExecutor::Begin_Implementation(WorldContextObject, Controller);
 	
-	CachedStudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>();
+	CachedStudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>();
 	check(CachedStudentPerceptor != nullptr);
 	
 	auto const ClosestUncheckedHouse = CachedStudentPerceptor->GetClosestHouse();

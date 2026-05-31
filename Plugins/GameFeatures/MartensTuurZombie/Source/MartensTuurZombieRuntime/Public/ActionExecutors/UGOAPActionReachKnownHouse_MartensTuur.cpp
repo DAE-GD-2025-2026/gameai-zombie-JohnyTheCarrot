@@ -10,7 +10,7 @@ void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* World
 	CachedController = Controller;
 	check(CachedController);
 	
-	StudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>();
+	StudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>();
 	check(StudentPerceptor != nullptr);
 	
 	auto const ClosestHouse = StudentPerceptor->GetClosestHouse();

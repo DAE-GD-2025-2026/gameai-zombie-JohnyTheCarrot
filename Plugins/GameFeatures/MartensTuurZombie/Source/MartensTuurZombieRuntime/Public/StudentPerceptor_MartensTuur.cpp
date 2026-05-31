@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 
 #include "Common/InventoryComponent.h"
 #include "Items/BaseItem.h"
@@ -9,7 +9,7 @@
 #include "Zombies/BaseZombie.h"
 
 
-void UStudentPerceptor::RefreshSurvivorState()
+void UStudentPerceptor_MartensTuur::RefreshSurvivorState()
 {
 	if (!GoapComp)
 	{
@@ -73,13 +73,13 @@ void UStudentPerceptor::RefreshSurvivorState()
 	GoapComp->State.UpdateFlags();
 }
 
-UStudentPerceptor::UStudentPerceptor()
+UStudentPerceptor_MartensTuur::UStudentPerceptor_MartensTuur()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
 // TODO: get closest has too many variants, reduce repetition!
-TWeakObjectPtr<AWeapon> UStudentPerceptor::GetClosestWeapon() const
+TWeakObjectPtr<AWeapon> UStudentPerceptor_MartensTuur::GetClosestWeapon() const
 {
 	TWeakObjectPtr<AWeapon> Closest{};
 	auto const ActorPos = GetOwner()->GetActorLocation();
@@ -96,7 +96,7 @@ TWeakObjectPtr<AWeapon> UStudentPerceptor::GetClosestWeapon() const
 	return Closest;
 }
 
-TWeakObjectPtr<AMedkit> UStudentPerceptor::GetClosestMedkit() const
+TWeakObjectPtr<AMedkit> UStudentPerceptor_MartensTuur::GetClosestMedkit() const
 {
 	TWeakObjectPtr<AMedkit> Closest{};
 	auto const ActorPos = GetOwner()->GetActorLocation();
@@ -113,7 +113,7 @@ TWeakObjectPtr<AMedkit> UStudentPerceptor::GetClosestMedkit() const
 	return Closest;
 }
 
-FKnownHouse_MartensTuur *UStudentPerceptor::GetClosestHouse()
+FKnownHouse_MartensTuur *UStudentPerceptor_MartensTuur::GetClosestHouse()
 {
 	FKnownHouse_MartensTuur* Closest{};
 	auto const ActorPos = GetOwner()->GetActorLocation();
@@ -131,7 +131,7 @@ FKnownHouse_MartensTuur *UStudentPerceptor::GetClosestHouse()
 	return Closest;
 }
 
-TWeakObjectPtr<AFood> UStudentPerceptor::GetClosestFood() const
+TWeakObjectPtr<AFood> UStudentPerceptor_MartensTuur::GetClosestFood() const
 {
 	TWeakObjectPtr<AFood> Closest{};
 	auto const ActorPos = GetOwner()->GetActorLocation();
@@ -148,13 +148,13 @@ TWeakObjectPtr<AFood> UStudentPerceptor::GetClosestFood() const
 	return Closest;
 }
 
-void UStudentPerceptor::BeginPlay()
+void UStudentPerceptor_MartensTuur::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	auto PerceptionComp = GetOwner()->GetComponentByClass<UAIPerceptionComponent>();
 	check(PerceptionComp);
-	PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &UStudentPerceptor::OnPerceptionUpdated);
+	PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &UStudentPerceptor_MartensTuur::OnPerceptionUpdated);
 	
 	HealthComp = GetOwner()->GetComponentByClass<UHealthComponent>();
 	check(HealthComp);
@@ -166,7 +166,7 @@ void UStudentPerceptor::BeginPlay()
 	check(InventoryComp);
 }
 
-void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+void UStudentPerceptor_MartensTuur::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	GEngine->AddOnScreenDebugMessage(5, 1.f, FColor::Green, 
 	FString::Printf(TEXT("Saw Something!")));
@@ -220,7 +220,7 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	RefreshSurvivorState();
 }
 
-void UStudentPerceptor::TickComponent(float DeltaTime, enum ELevelTick TickType,
+void UStudentPerceptor_MartensTuur::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

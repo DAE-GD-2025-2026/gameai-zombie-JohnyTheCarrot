@@ -1,6 +1,6 @@
 #pragma once
 #include "GOAP.h"
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 #include "UGOAPActionTryFindNeighboringHouses_MartensTuur.generated.h"
 
 UCLASS()
@@ -11,7 +11,7 @@ class UGOAPActionTryFindNeighboringHouses_MartensTuur : public UGOAPActionExecut
 	FVector CurrentDestination{};
 	
 	UPROPERTY()
-	UStudentPerceptor *CachedStudentPerceptor{};
+	UStudentPerceptor_MartensTuur *CachedStudentPerceptor{};
 	
 	UPROPERTY()
 	int NumHousesAtStart{};

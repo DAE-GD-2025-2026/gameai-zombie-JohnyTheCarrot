@@ -1,13 +1,13 @@
 #include "UGOAPActionTryFindNeighboringHouses_MartensTuur.h"
 
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 #include "Navigation/PathFollowingComponent.h"
 
 void UGOAPActionTryFindNeighboringHouses_MartensTuur::Begin_Implementation(UObject* WorldContextObject, AAIController* Controller)
 {
 	UGOAPActionExecutor::Begin_Implementation(WorldContextObject, Controller);
 	
-	CachedStudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>();
+	CachedStudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>();
 	check(CachedStudentPerceptor != nullptr);
 	
 	CurrentDestination = CachedStudentPerceptor->PlacesToCheckForHouse.Top();

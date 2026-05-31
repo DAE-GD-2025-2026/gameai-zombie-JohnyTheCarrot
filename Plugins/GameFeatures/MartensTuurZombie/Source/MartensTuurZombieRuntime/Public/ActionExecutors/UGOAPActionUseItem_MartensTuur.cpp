@@ -1,6 +1,6 @@
 #include "UGOAPActionUseItem_MartensTuur.h"
 
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 #include "Common/InventoryComponent.h"
 
 void UGOAPActionUseItem_MartensTuur::Begin_Implementation(UObject* WorldContextObject, AAIController* Controller)
@@ -24,7 +24,7 @@ void UGOAPActionUseItem_MartensTuur::Begin_Implementation(UObject* WorldContextO
 	{
 		CachedInventory->RemoveItem(SlotIdx);
 	}
-	auto const Perceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>();
+	auto const Perceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>();
 	Perceptor->RefreshSurvivorState();
 	Finish(EGOAPExecutorResult::Success);
 }

@@ -18,16 +18,16 @@
 #include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISense_Damage.h"
 #include "Zombies/BaseZombie.h"
-#include "StudentPerceptor.generated.h"
+#include "StudentPerceptor_MartensTuur.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class MARTENSTUURZOMBIERUNTIME_API UStudentPerceptor : public UActorComponent
+class MARTENSTUURZOMBIERUNTIME_API UStudentPerceptor_MartensTuur : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this component's properties
-	UStudentPerceptor();
+	UStudentPerceptor_MartensTuur();
 	
 	void RefreshSurvivorState();
 	

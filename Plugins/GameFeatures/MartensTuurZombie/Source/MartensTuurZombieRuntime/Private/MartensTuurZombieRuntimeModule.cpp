@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "MartensTuurZombieRuntimeModule.h"
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 
 #define LOCTEXT_NAMESPACE "FMartensTuurZombieRuntimeModule"
 

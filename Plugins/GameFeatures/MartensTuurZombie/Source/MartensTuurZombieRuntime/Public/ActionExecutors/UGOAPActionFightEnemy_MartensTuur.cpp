@@ -1,13 +1,13 @@
 #include "UGOAPActionFightEnemy_MartensTuur.h"
 
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 #include "Common/InventoryComponent.h"
 
 void UGOAPActionFightEnemy_MartensTuur::Begin_Implementation(UObject* WorldContextObject, AAIController* Controller)
 {
 	Super::Begin_Implementation(WorldContextObject, Controller);
 	
-	StudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>();
+	StudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>();
 	check(StudentPerceptor != nullptr);
 	
 	if (StudentPerceptor->LastSeenZombiePos.IsEmpty())

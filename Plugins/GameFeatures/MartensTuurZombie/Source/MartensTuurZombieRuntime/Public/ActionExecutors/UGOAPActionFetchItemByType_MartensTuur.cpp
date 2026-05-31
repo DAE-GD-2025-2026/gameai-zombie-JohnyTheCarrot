@@ -8,7 +8,7 @@ void UGOAPActionFetchItemByType_MartensTuur::Begin_Implementation(UObject* World
 {
 	Super::Begin_Implementation(WorldContextObject, Controller);
 	
-	CachedPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor>();
+	CachedPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>();
 	check(CachedPerceptor != nullptr);
 	
 	CachedInventory = GetOwner()->GetComponentByClass<UInventoryComponent>();

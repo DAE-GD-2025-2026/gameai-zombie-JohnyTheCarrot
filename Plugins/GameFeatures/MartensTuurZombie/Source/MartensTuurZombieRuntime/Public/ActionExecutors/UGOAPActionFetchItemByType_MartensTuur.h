@@ -1,6 +1,6 @@
 #pragma once
 #include "GOAP.h"
-#include "StudentPerceptor.h"
+#include "StudentPerceptor_MartensTuur.h"
 #include "Common/InventoryComponent.h"
 #include "Items/Weapon.h"
 #include "UGOAPActionFetchItemByType_MartensTuur.generated.h"
@@ -15,7 +15,7 @@ protected:
 	TWeakObjectPtr<ABaseItem> Target{};
 	
 	UPROPERTY()
-	UStudentPerceptor *CachedPerceptor{};
+	UStudentPerceptor_MartensTuur *CachedPerceptor{};
 	
 	UPROPERTY()
 	UInventoryComponent* CachedInventory{};
