@@ -37,6 +37,7 @@ The application of GOAP to this project is essentially a proof of concept, to be
 The goal of this specific handed in version of the zombie game is solely to test GOAP, but it is not perfectly used, as mentioned.
 An example of this compromise is the fact the survivor currently immediately points towards an enemy, instantly shoots.
 The goal of this, again, is to research GOAP.
+It may not always get the best results in this MVP, depending on the seed. You can always try another seed.
 
 ## GOAP Implementation
 
