@@ -35,7 +35,7 @@ bool FGOAPState_Martens_Tuur::UpdateFlags()
 	};
 	
 	// State Stamina: CurrentStamina / MaxStamina
-	constexpr float TirednessStaminaPercentageThreshold = 0.4f;
+	constexpr float TirednessStaminaPercentageThreshold = 0.6f;
 	
 	SetFlag(EGOAPFlags_Martens_Tuur::HasFoundWeapon, AwareOf.WeaponsNum > 0);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasFoundHouse, AwareOf.HousesNum > 0);
@@ -43,7 +43,7 @@ bool FGOAPState_Martens_Tuur::UpdateFlags()
 	SetFlag(EGOAPFlags_Martens_Tuur::HasFoundMedkit, AwareOf.MedkitsNum > 0);
 	SetFlag(EGOAPFlags_Martens_Tuur::KnowsUncheckedHouse, AwareOf.UncheckedHousesNum > 0);
 	SetFlag(EGOAPFlags_Martens_Tuur::SeesEnemy, AwareOf.EnemiesNum > 0);
-	SetFlag(EGOAPFlags_Martens_Tuur::IsTired, Stamina < TirednessStaminaPercentageThreshold);
+	SetFlag(EGOAPFlags_Martens_Tuur::IsTired, Stamina <= TirednessStaminaPercentageThreshold);
 	SetFlag(EGOAPFlags_Martens_Tuur::IsFullHealth, Health > 0.95f);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasFood, InventoryContains.Food);
 	SetFlag(EGOAPFlags_Martens_Tuur::HasWeapon, InventoryContains.Weapon);

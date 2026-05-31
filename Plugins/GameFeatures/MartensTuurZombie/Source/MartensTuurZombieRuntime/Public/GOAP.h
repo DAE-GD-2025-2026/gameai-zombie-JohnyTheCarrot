@@ -15,6 +15,7 @@ enum class EGOAPFlags_Martens_Tuur : uint8
 	HasMedkit,
 	
 	SeesEnemy,
+	SeesPurgeZone,
 	
 	HasFoundWeapon,
 	HasFoundHouse,

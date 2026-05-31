@@ -6,6 +6,7 @@
 #include "Common/InventoryComponent.h"
 #include "Items/BaseItem.h"
 #include "Village/House/House.h"
+#include "Zombies/BaseZombie.h"
 
 
 void UStudentPerceptor::RefreshSurvivorState()
@@ -21,12 +22,29 @@ void UStudentPerceptor::RefreshSurvivorState()
 	{
 		return Medkit->GetValue() == 0 || !Medkit.IsValid() || Medkit->IsHidden();
 	});
+	KnownWeapons.RemoveAll([](TWeakObjectPtr<ABaseItem> const &Item)
+	{
+		return Item->GetValue() == 0 || !Item.IsValid() || Item->IsHidden();
+	});
+	KnownFoods.RemoveAll([](TWeakObjectPtr<ABaseItem> const &Item)
+	{
+		return Item->GetValue() == 0 || !Item.IsValid() || Item->IsHidden();
+	});
 	
-	GoapComp->State.Health = HealthComp->GetHealth() / HealthComp->GetMaxHealth();
+	for (auto It = LastSeenZombiePos.CreateIterator(); It; ++It)
+	{
+		if (!It.Key().IsValid())
+		{
+			It.RemoveCurrent();
+		}
+	}	
+	
+	GoapComp->State.Health = static_cast<float>(HealthComp->GetHealth()) / static_cast<float>(HealthComp->GetMaxHealth());
 	GoapComp->State.Stamina = StaminaComp->GetCurrentStamina() / StaminaComp->GetMaxStamina();
 	GoapComp->State.AwareOf.WeaponsNum = KnownWeapons.Num();
 	GoapComp->State.AwareOf.HousesNum = CheckedHouses.Num();
 	GoapComp->State.AwareOf.FoodNum = KnownFoods.Num();
+	GoapComp->State.AwareOf.EnemiesNum = LastSeenZombiePos.Num();
 	// UE_LOG(LogTemp, Warning, TEXT("Num medkits: %d"), KnownMedkits.Num());
 	GoapComp->State.AwareOf.MedkitsNum = KnownMedkits.Num();
 	GoapComp->State.AwareOf.UncheckedHousesNum = UncheckedHouses.Num();
@@ -173,6 +191,11 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin + FVector{KnownHouse.Bounds.Extent.X, 0.f, 0.f});
 		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin - FVector{0.f, KnownHouse.Bounds.Extent.Y, 0.f});
 		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin + FVector{0.f, KnownHouse.Bounds.Extent.Y, 0.f});
+	}
+	else if (ABaseZombie *Zombie = Cast<ABaseZombie>(Actor))
+	{
+		auto &LastPos = LastSeenZombiePos.FindOrAdd(Zombie, Zombie->GetActorLocation());
+		LastPos = Zombie->GetActorLocation();
 	}
 	else if (ABaseItem *Item = Cast<ABaseItem>(Actor))
 	{

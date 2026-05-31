@@ -20,6 +20,7 @@ void UGOAPActionFetchItemByType_MartensTuur::Begin_Implementation(UObject* World
 	SelectTarget();
 	check(Target.Get());
 	
+	Controller->StopMovement();
 	auto const MoveResult = Controller->MoveToActor(Target.Get(), 10.f);
 	
 	Status = EGOAPExecutorResult::Busy;

@@ -12,11 +12,12 @@ void UGOAPActionWander_MartensTuur::PickNewDestination()
 	
 	check(CachedController->GetPawn());
 	auto const Origin = CachedController->GetPawn()->GetActorLocation();
-	constexpr float Radius{500.f};
+	constexpr float Radius{100.f};
+	constexpr float WanderTargetDistance{200.f};
 	
 	FNavLocation ResultLocation;
 	auto const PointFound = NavSys->GetRandomReachablePointInRadius(
-		Origin,
+		Origin + GetOwner()->GetActorForwardVector() * WanderTargetDistance,
 		Radius,
 		ResultLocation
 	);

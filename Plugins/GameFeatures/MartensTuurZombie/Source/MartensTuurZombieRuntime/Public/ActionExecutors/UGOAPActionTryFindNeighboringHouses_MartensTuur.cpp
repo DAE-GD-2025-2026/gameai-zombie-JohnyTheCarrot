@@ -25,7 +25,7 @@ void UGOAPActionTryFindNeighboringHouses_MartensTuur::Begin_Implementation(UObje
 EGOAPExecutorResult UGOAPActionTryFindNeighboringHouses_MartensTuur::ExecutorTick_Implementation(
 	UObject* WorldContextObject, AAIController* Controller)
 {
-	constexpr float AcceptanceRadius{100.f};
+	constexpr float AcceptanceRadius{50.f};
 	if (FVector::DistSquared(GetOwner()->GetActorLocation(), CurrentDestination) <= AcceptanceRadius * AcceptanceRadius)
 	{
 		CachedStudentPerceptor->PlacesToCheckForHouse.Remove(CurrentDestination);

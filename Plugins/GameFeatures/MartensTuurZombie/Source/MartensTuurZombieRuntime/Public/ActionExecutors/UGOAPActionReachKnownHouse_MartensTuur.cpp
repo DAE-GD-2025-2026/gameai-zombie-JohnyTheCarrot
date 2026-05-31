@@ -23,6 +23,7 @@ void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* World
 	
 	House = ClosestHouse;
 	
+	Controller->StopMovement();
 	auto const MoveResult = Controller->MoveToLocation(House->Bounds.Origin, 10.f);
 	if (MoveResult == EPathFollowingRequestResult::Type::Failed)
 	{

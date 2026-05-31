@@ -19,11 +19,19 @@ void UGOAPActionScanHouseFor_MartensTuur::Begin_Implementation(UObject* WorldCon
 	}
 	House = ClosestUncheckedHouse;
 	
+	Controller->StopMovement();
 	auto const MoveResult = Controller->MoveToLocation(House->Bounds.Origin, 10.f);
 	if (MoveResult == EPathFollowingRequestResult::Type::Failed)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Couldn't reach house location, failing."));
 		Finish(EGOAPExecutorResult::Failure);
+	}
+	
+	if (Controller->GetMoveStatus() == EPathFollowingStatus::Idle)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Move failed to start"));
+		Finish(EGOAPExecutorResult::Failure);
+		return;
 	}
 }
 

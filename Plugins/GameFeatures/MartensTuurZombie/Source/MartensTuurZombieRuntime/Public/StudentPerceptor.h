@@ -17,6 +17,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISense_Damage.h"
+#include "Zombies/BaseZombie.h"
 #include "StudentPerceptor.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -41,6 +42,9 @@ public:
 	
 	UPROPERTY()
 	UInventoryComponent *InventoryComp{};
+	
+	UPROPERTY()
+	TMap<TWeakObjectPtr<ABaseZombie>, FVector> LastSeenZombiePos{};
 	
 	UPROPERTY()
 	TArray<FKnownHouse_MartensTuur> CheckedHouses{};
