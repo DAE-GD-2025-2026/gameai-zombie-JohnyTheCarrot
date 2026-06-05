@@ -96,6 +96,9 @@ enum class EPriorityModifierValue : uint8
 {
 	OneMinusHealthPercentage,
 	OneMinusStaminaPercentage,
+	DistanceClosestFood,
+	DistanceClosestMedkit,
+	DistanceClosestWeapon,
 };
 
 UENUM(BlueprintType)

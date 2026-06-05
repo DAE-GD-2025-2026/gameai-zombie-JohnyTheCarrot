@@ -168,6 +168,7 @@ void UStudentPerceptor_MartensTuur::BeginPlay()
 
 void UStudentPerceptor_MartensTuur::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+	return;
 	GEngine->AddOnScreenDebugMessage(5, 1.f, FColor::Green, 
 	FString::Printf(TEXT("Saw Something!")));
 
@@ -225,5 +226,6 @@ void UStudentPerceptor_MartensTuur::TickComponent(float DeltaTime, enum ELevelTi
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
+	return;
 	RefreshSurvivorState();
 }
