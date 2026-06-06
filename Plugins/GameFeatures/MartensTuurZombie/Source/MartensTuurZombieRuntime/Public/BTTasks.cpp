@@ -3,6 +3,7 @@
 #include "AIController.h"
 #include "StudentPerceptor_MartensTuur.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Common/InventoryComponent.h"
 #include "SteeringBehaviors_MartensTuur/SteeringBehavior_MartensTuur.h"
 #include "Survivor/SurvivorPawn.h"
 
@@ -45,4 +46,32 @@ EBTNodeResult::Type UBTFindNewWanderPos::ExecuteTask(UBehaviorTreeComponent& Own
 	Blackboard->SetValueAsVector(WanderKey.SelectedKeyName, Get3DVec(TargetPos));
 	
 	return EBTNodeResult::Succeeded;
+}
+
+EBTNodeResult::Type UBTGetItem::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	auto *const Controller = OwnerComp.GetAIOwner();
+	auto *Blackboard = Controller->GetBlackboardComponent();
+	auto *const Item = Cast<ABaseItem>(Blackboard->GetValueAsObject(ItemKey.SelectedKeyName));
+	
+	auto *const Agent = Cast<ASurvivorPawn>(Controller->GetPawn());
+	auto *const Inv = Agent->GetComponentByClass<UStudentPerceptor_MartensTuur>()->InventoryComp;
+	
+	auto const &InvItems = Inv->GetInventory();
+	int SlotIdx{-1};
+	for (int Idx = 0; Idx < InvItems.Num(); ++Idx)
+	{
+		if (InvItems[Idx] == nullptr)
+		{
+			SlotIdx = Idx;
+			break;
+		}
+	}
+	if (SlotIdx == -1 || SlotIdx == InvItems.Num()) return EBTNodeResult::Failed;
+	
+	auto const GrabResult = Inv->GrabItem(SlotIdx, Item);
+	if (!GrabResult) UE_LOG(LogTemp, Warning, TEXT("Couldn't grab item"));
+	return GrabResult
+		? EBTNodeResult::Succeeded
+		: EBTNodeResult::Failed;
 }

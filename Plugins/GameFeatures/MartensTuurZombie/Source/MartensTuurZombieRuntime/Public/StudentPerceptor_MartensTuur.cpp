@@ -172,7 +172,7 @@ void UStudentPerceptor_MartensTuur::TickComponent(float DeltaTime, enum ELevelTi
 	int NumFood{0};
 	int NumMedkits{0};
 	int NumGarbage{0};
-	for (auto const *Item : Inv)
+	for (auto *Item : Inv)
 	{
 		if (Item == nullptr) continue;
 		switch (Item->GetItemType())
@@ -183,6 +183,10 @@ void UStudentPerceptor_MartensTuur::TickComponent(float DeltaTime, enum ELevelTi
 			case EItemType::Shotgun: NumGuns++; break;
 			case EItemType::Garbage: NumGarbage++; break;
 		}
+		KnownWeapons.Remove(Cast<AWeapon>(Item));
+		KnownMedkits.Remove(Cast<AMedkit>(Item));
+		KnownFoods.Remove(Cast<AFood>(Item));
+		DesiredItems.Remove(Cast<ABaseItem>(Item));
 	}
 	
 	if (NumGuns == 0)
