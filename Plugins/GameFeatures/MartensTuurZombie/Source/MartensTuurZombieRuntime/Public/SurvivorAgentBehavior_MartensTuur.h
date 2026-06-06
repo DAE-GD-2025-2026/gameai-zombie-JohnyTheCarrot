@@ -26,7 +26,4 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentSteeringBehavior(USteeringBehavior_MartensTuur *SteeringBehavior);
-	
-	UFUNCTION(BlueprintCallable)
-	void MoveInDirection(float DeltaTime, FVector2D Direction, float Scale = 1.f);
 };

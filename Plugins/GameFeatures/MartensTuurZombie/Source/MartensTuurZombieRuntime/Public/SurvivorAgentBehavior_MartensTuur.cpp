@@ -56,10 +56,3 @@ void USurvivorAgentBehavior_MartensTuur::SetCurrentSteeringBehavior(USteeringBeh
 	CurrentSteeringBehavior = SteeringBehavior;
 	SteeringBehavior->Reset();
 }
-
-void USurvivorAgentBehavior_MartensTuur::MoveInDirection(float DeltaTime, FVector2D Direction, float Scale)
-{
-	FVector const Movement{Get3DVec(Direction) * FloatingPawnMovement->GetMaxSpeed() * Scale * DeltaTime};
-	UE_LOG(LogTemp, Warning, TEXT("%f, %f"), Movement.X, Movement.Y);
-	Cast<APawn>(GetOwner())->AddMovementInput(Movement);
-}

@@ -113,3 +113,31 @@ FSteeringOutput_MartensTuur USteeringBehavior_Flee_MartensTuur::CalculateOutput(
 	
 	return Output;
 }
+
+FSteeringOutput_MartensTuur USteeringBehavior_Blended_MartensTuur::CalculateOutput(float DeltaT,
+	FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent)
+{
+	FSteeringOutput_MartensTuur Output;
+	
+	float TotalWeight = 0.f;
+	
+	for (auto const &[Weight, Behavior] : Behaviors)
+	{
+		if (!Behavior || Weight <= 0.f) continue;
+		
+		auto const BehaviorOutput = Behavior->CalculateOutput(DeltaT, Target, Agent);
+		Output.Direction += BehaviorOutput.Direction * Weight;
+		Output.SpeedScale += BehaviorOutput.SpeedScale * Weight;
+		TotalWeight += Weight;
+		
+		// todo: face direction?
+	}
+	
+	if (TotalWeight > KINDA_SMALL_NUMBER)
+	{
+		Output.SpeedScale /= TotalWeight;
+	}
+	Output.Direction = Output.Direction.GetSafeNormal();
+	
+	return Output;
+}

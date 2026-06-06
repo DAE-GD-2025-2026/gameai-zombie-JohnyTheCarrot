@@ -157,7 +157,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FWeightedBehavior final
+struct FWeightedBehavior_MartensTuur final
 {
 	GENERATED_BODY()
 	
@@ -165,18 +165,17 @@ struct FWeightedBehavior final
 	float Weight;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSubclassOf<USteeringBehavior_MartensTuur> Behavior;
+	TObjectPtr<USteeringBehavior_MartensTuur> Behavior;
 };
 
 UCLASS(BlueprintType)
-class UBlendedSteering : public UPrimaryDataAsset
+class USteeringBehavior_Blended_MartensTuur : public USteeringBehavior_MartensTuur
 {
 	GENERATED_BODY()
-	
+
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FName Name;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TArray<FWeightedBehavior_MartensTuur> Behaviors;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FWeightedBehavior> Behaviors;
+	virtual FSteeringOutput_MartensTuur CalculateOutput(float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent) override;
 };
