@@ -16,7 +16,7 @@ FVector Get3DVec(FVector2D Vec)
 bool USteeringBehavior_Seek_MartensTuur::CheckIfDone(FSteeringOutput_MartensTuur const& Output, float DeltaT,
 	FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent) const
 {
-	return Output.Direction.Length() <= DoneAtDistance;
+	return FVector2D::Distance(Get2DVec(Agent->GetActorLocation()), Target.TargetLocation) <= DoneAtDistance;
 }
 
 FSteeringOutput_MartensTuur USteeringBehavior_Seek_MartensTuur::CalculateOutput(float DeltaT,
