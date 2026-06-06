@@ -57,6 +57,9 @@ public:
 	TArray<FVector> PlacesToCheckForHouse{};
 	
 	UPROPERTY(BlueprintReadOnly)
+	TArray<ABaseItem*> DesiredItems{};
+	
+	UPROPERTY(BlueprintReadOnly)
 	TArray<AWeapon*> KnownWeapons{};
 	
 	UPROPERTY(BlueprintReadOnly)

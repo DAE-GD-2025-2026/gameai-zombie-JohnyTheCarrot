@@ -166,5 +166,43 @@ void UStudentPerceptor_MartensTuur::OnPerceptionUpdated(AActor* Actor, FAIStimul
 void UStudentPerceptor_MartensTuur::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
+	auto const &Inv = InventoryComp->GetInventory();
+	
+	int NumGuns{0};
+	int NumFood{0};
+	int NumMedkits{0};
+	int NumGarbage{0};
+	for (auto const *Item : Inv)
+	{
+		if (Item == nullptr) continue;
+		switch (Item->GetItemType())
+		{
+			case EItemType::Food: NumFood++; break;
+			case EItemType::Medkit: NumMedkits++; break;
+			case EItemType::Pistol:
+			case EItemType::Shotgun: NumGuns++; break;
+			case EItemType::Garbage: NumGarbage++; break;
+		}
+	}
+	
+	if (NumGuns == 0)
+	{
+		auto const ClosestWeapon = GetClosestWeapon();
+		if (ClosestWeapon != nullptr)
+			DesiredItems.Add(ClosestWeapon.Get());
+	}
+	if (NumFood == 0)
+	{
+		auto const ClosestFood = GetClosestFood();
+		if (ClosestFood != nullptr)
+			DesiredItems.Add(ClosestFood.Get());
+	}
+	if (NumMedkits == 0)
+	{
+		auto const ClosestMedkit = GetClosestMedkit();
+		if (ClosestMedkit != nullptr)
+			DesiredItems.Add(ClosestMedkit.Get());
+	}
+	
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
