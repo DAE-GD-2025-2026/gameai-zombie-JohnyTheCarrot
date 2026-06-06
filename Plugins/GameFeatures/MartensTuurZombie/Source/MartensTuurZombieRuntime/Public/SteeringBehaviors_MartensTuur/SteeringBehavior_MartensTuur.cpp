@@ -13,8 +13,14 @@ FVector Get3DVec(FVector2D Vec)
 	return FVector{Vec.X, Vec.Y, 0.f};
 }
 
+bool USteeringBehavior_Seek_MartensTuur::CheckIfDone(FSteeringOutput_MartensTuur const& Output, float DeltaT,
+	FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent) const
+{
+	return Output.Direction.Length() <= DoneAtDistance;
+}
+
 FSteeringOutput_MartensTuur USteeringBehavior_Seek_MartensTuur::CalculateOutput(float DeltaT,
-                                                                                FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent)
+	FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent)
 {
 	FSteeringOutput_MartensTuur Result;
 	
@@ -26,8 +32,31 @@ FSteeringOutput_MartensTuur USteeringBehavior_Seek_MartensTuur::CalculateOutput(
 	return Result;
 }
 
+FSteeringOutput_MartensTuur USteeringBehavior_Arrive_MartensTuur::CalculateOutput(float DeltaT,
+	FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent)
+{
+	auto Output = Super::CalculateOutput(DeltaT, Target, Agent);
+	if (auto const Dist = FVector2D::Distance(Get2DVec(Agent->GetActorLocation()), Target.TargetLocation); Dist <= SlowAtDistance)
+	{
+		Output.SpeedScale = Dist / SlowAtDistance;
+	}
+	
+	return Output;
+}
+
+FSteeringOutput_MartensTuur USteeringBehavior_FollowPath_MartensTuur::CalculateOutput(float DeltaT,
+	FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent)
+{
+	if (LastTarget != Target)
+	{
+		LastTarget = Target;
+	}
+	
+	return Super::CalculateOutput(DeltaT, Target, Agent);
+}
+
 FSteeringOutput_MartensTuur USteeringBehavior_Wander_MartensTuur::CalculateOutput(float DeltaT,
-	FSteeringBehaviorTarget_MartensTuur const&, AActor const* Agent)
+	FSteeringBehaviorTarget_MartensTuur const&, ASurvivorPawn const* Agent)
 {
 	auto const Angle = FMath::RandRange(MinAngle, MaxAngle);
 	FVector2D const AngleVec{FMath::Cos(Angle), FMath::Sin(Angle)};
@@ -42,7 +71,7 @@ FSteeringOutput_MartensTuur USteeringBehavior_Wander_MartensTuur::CalculateOutpu
 }
 
 FSteeringOutput_MartensTuur USteeringBehavior_Flee_MartensTuur::CalculateOutput(float DeltaT,
-	FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent)
+	FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent)
 {
 	auto Output = Super::CalculateOutput(DeltaT, Target, Agent);
 	

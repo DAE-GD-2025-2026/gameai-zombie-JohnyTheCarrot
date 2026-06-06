@@ -54,33 +54,33 @@ struct FNode final
 
 void UGoapGraph::NextAction()
 {
-	if (CurrentPlan.IsValidIndex(CurrentActionIndex + 1))
-	{
-		if (auto const Perceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>())
-			Perceptor->RefreshSurvivorState();
-		else
-			UE_LOG(LogTemp, Warning, TEXT("NextAction found no perceptor!"));
-		
-		if (auto const CurrentAction = GetCurrentAction())
-			CurrentAction->GetAssociatedExecutorFromActor(GetOwner())->OnFinish();
-		
-		++CurrentActionIndex;
-		
-		auto CurrentExecutor = GetCurrentAction()->GetAssociatedExecutorFromActor(GetOwner());
-		
-		UE_LOG(LogTemp, Warning, TEXT("Begin action '%s'..."), *GetCurrentAction()->Name.ToString());
-		auto const Controller = Cast<APawn>(GetOwner())->GetController();
-		auto const AIController = Cast<AAIController>(Controller);
-		CurrentExecutor->Status = EGOAPExecutorResult::Busy;
-		CurrentExecutor->Begin(AIController, AIController);
-		
-		return;
-	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("Plan completed!"));
-	
-	CurrentGoal = {};
-	ActivateHighestPriorityGoal();
+	// if (CurrentPlan.IsValidIndex(CurrentActionIndex + 1))
+	// {
+	// 	if (auto const Perceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>())
+	// 		Perceptor->RefreshSurvivorState();
+	// 	else
+	// 		UE_LOG(LogTemp, Warning, TEXT("NextAction found no perceptor!"));
+	// 	
+	// 	if (auto const CurrentAction = GetCurrentAction())
+	// 		CurrentAction->GetAssociatedExecutorFromActor(GetOwner())->OnFinish();
+	// 	
+	// 	++CurrentActionIndex;
+	// 	
+	// 	auto CurrentExecutor = GetCurrentAction()->GetAssociatedExecutorFromActor(GetOwner());
+	// 	
+	// 	UE_LOG(LogTemp, Warning, TEXT("Begin action '%s'..."), *GetCurrentAction()->Name.ToString());
+	// 	auto const Controller = Cast<APawn>(GetOwner())->GetController();
+	// 	auto const AIController = Cast<AAIController>(Controller);
+	// 	CurrentExecutor->Status = EGOAPExecutorResult::Busy;
+	// 	CurrentExecutor->Begin(AIController, AIController);
+	// 	
+	// 	return;
+	// }
+	//
+	// UE_LOG(LogTemp, Warning, TEXT("Plan completed!"));
+	//
+	// CurrentGoal = {};
+	// ActivateHighestPriorityGoal();
 }
 
 UGoapGraph::UGoapGraph()

@@ -21,21 +21,41 @@ void USurvivorAgentBehavior_MartensTuur::TickComponent(float DeltaTime, enum ELe
 {
 	if (CurrentSteeringBehavior == nullptr) return;
 	
-	auto const Output = CurrentSteeringBehavior->CalculateOutput(DeltaTime, SteerTarget, GetOwner());
+	auto const Output = CurrentSteeringBehavior->CalculateOutput(DeltaTime, SteerTarget, Cast<ASurvivorPawn>(GetOwner()));
+	auto const bIsDone = CurrentSteeringBehavior->CheckIfDone(Output, DeltaTime, SteerTarget, GetOwner());
+	if (bIsDone) CurrentSteeringBehavior->Finish();
 	
 	auto Pawn = Cast<APawn>(GetOwner());
 	if (Output.Direction.SquaredLength() > 0.f)
 	{
-		FVector const Movement{Get3DVec(Output.Direction.GetSafeNormal()) * FloatingPawnMovement->GetMaxSpeed()};
+		auto const MoveDir = Get3DVec(Output.Direction.GetSafeNormal());
+		FVector const Movement{MoveDir * FloatingPawnMovement->GetMaxSpeed()};
 		UE_LOG(LogTemp, Warning, TEXT("%f, %f"), Movement.X, Movement.Y);
-		Pawn->AddMovementInput(Movement);
+		Pawn->AddMovementInput(Movement, Output.SpeedScale);
 	
 		if (Output.FaceDirection)
 		{
-			auto const Rot = Pawn->GetActorRotation() - Get3DVec(Output.Direction).Rotation();
-			Pawn->AddControllerYawInput(Rot.Yaw);
+			auto const CurrentRot = Pawn->GetActorRotation();
+			auto const TargetRot = MoveDir.Rotation();
+			
+			float const RotationSpeed = 8.f;
+			FRotator const NewRot = FMath::RInterpTo(
+				CurrentRot,
+				TargetRot,
+				DeltaTime,
+				RotationSpeed
+			);
+			
+			Pawn->SetActorRotation(NewRot);
 		}
 	}
+}
+
+void USurvivorAgentBehavior_MartensTuur::SetCurrentSteeringBehavior(USteeringBehavior_MartensTuur* SteeringBehavior)
+{
+	check(SteeringBehavior);
+	CurrentSteeringBehavior = SteeringBehavior;
+	SteeringBehavior->Reset();
 }
 
 void USurvivorAgentBehavior_MartensTuur::MoveInDirection(float DeltaTime, FVector2D Direction, float Scale)

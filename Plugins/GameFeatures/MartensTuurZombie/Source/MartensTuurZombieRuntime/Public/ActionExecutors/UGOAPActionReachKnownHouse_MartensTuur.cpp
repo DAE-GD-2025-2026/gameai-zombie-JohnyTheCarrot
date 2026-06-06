@@ -6,30 +6,30 @@
 void UGOAPActionReachKnownHouse_MartensTuur::Begin_Implementation(UObject* WorldContextObject,
 	AAIController* Controller)
 {
-	UGOAPActionExecutor::Begin_Implementation(WorldContextObject, Controller);
-	CachedController = Controller;
-	check(CachedController);
-	
-	StudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>();
-	check(StudentPerceptor != nullptr);
-	
-	auto const ClosestHouse = StudentPerceptor->GetClosestHouse();
-	if (ClosestHouse == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("House to reach is null"));
-		Finish(EGOAPExecutorResult::Failure);
-		return;
-	}
-	
-	House = ClosestHouse;
-	
-	Controller->StopMovement();
-	auto const MoveResult = Controller->MoveToLocation(House->Bounds.Origin, 10.f);
-	if (MoveResult == EPathFollowingRequestResult::Type::Failed)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Couldn't reach house location, failing."));
-		Finish(EGOAPExecutorResult::Failure);
-	}
+	// UGOAPActionExecutor::Begin_Implementation(WorldContextObject, Controller);
+	// CachedController = Controller;
+	// check(CachedController);
+	//
+	// StudentPerceptor = GetOwner()->GetComponentByClass<UStudentPerceptor_MartensTuur>();
+	// check(StudentPerceptor != nullptr);
+	//
+	// auto const ClosestHouse = StudentPerceptor->GetClosestHouse();
+	// if (ClosestHouse == nullptr)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("House to reach is null"));
+	// 	Finish(EGOAPExecutorResult::Failure);
+	// 	return;
+	// }
+	//
+	// House = ClosestHouse;
+	//
+	// Controller->StopMovement();
+	// auto const MoveResult = Controller->MoveToLocation(House->Bounds.Origin, 10.f);
+	// if (MoveResult == EPathFollowingRequestResult::Type::Failed)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("Couldn't reach house location, failing."));
+	// 	Finish(EGOAPExecutorResult::Failure);
+	// }
 }
 
 EGOAPExecutorResult UGOAPActionReachKnownHouse_MartensTuur::ExecutorTick_Implementation(UObject* WorldContextObject,
@@ -61,7 +61,7 @@ void UGOAPActionReachKnownHouse_MartensTuur::OnFinish()
 	
 	UE_LOG(LogTemp, Warning, TEXT("Marking house as checked"));
 	auto const HouseDeref = *House;
-	StudentPerceptor->UncheckedHouses.Remove(HouseDeref);
+	// StudentPerceptor->UncheckedHouses.Remove(HouseDeref);
 	StudentPerceptor->CheckedHouses.Add(HouseDeref);
 	StudentPerceptor->RefreshSurvivorState();
 	House = nullptr;

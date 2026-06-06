@@ -20,7 +20,7 @@
 #include "Zombies/BaseZombie.h"
 #include "StudentPerceptor_MartensTuur.generated.h"
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MARTENSTUURZOMBIERUNTIME_API UStudentPerceptor_MartensTuur : public UActorComponent
 {
 	GENERATED_BODY()
@@ -29,41 +29,41 @@ public:
 	// Sets default values for this component's properties
 	UStudentPerceptor_MartensTuur();
 	
-	void RefreshSurvivorState();
+	void RefreshSurvivorState() {}
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UGoapGraph *GoapComp{};
-	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	UHealthComponent *HealthComp{};
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	UStaminaComponent *StaminaComp{};
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	UInventoryComponent *InventoryComp{};
 	
 	UPROPERTY()
 	TMap<TWeakObjectPtr<ABaseZombie>, FVector> LastSeenZombiePos{};
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TArray<FKnownHouse_MartensTuur> CheckedHouses{};
 	
-	UPROPERTY()
-	TArray<FKnownHouse_MartensTuur> UncheckedHouses{};
+	UPROPERTY(BlueprintReadOnly)
+	TArray<AHouse*> UncheckedHouses{};
 	
-	UPROPERTY()
+	UFUNCTION(BlueprintCallable)
+	void MarkHouseChecked(AHouse *House);
+	
+	UPROPERTY(BlueprintReadOnly)
 	// Mostly slightly outside the walls of houses we already know of, to try to find neighbors in villages
 	TArray<FVector> PlacesToCheckForHouse{};
 	
-	UPROPERTY()
-	TArray<TWeakObjectPtr<AWeapon>> KnownWeapons{};
+	UPROPERTY(BlueprintReadOnly)
+	TArray<AWeapon*> KnownWeapons{};
 	
-	UPROPERTY()
-	TArray<TWeakObjectPtr<AFood>> KnownFoods{};
+	UPROPERTY(BlueprintReadOnly)
+	TArray<AFood*> KnownFoods{};
 	
-	UPROPERTY()
-	TArray<TWeakObjectPtr<AMedkit>> KnownMedkits{};
+	UPROPERTY(BlueprintReadOnly)
+	TArray<AMedkit*> KnownMedkits{};
 	
 	[[nodiscard]]
 	TWeakObjectPtr<AWeapon> GetClosestWeapon() const;
@@ -71,8 +71,8 @@ public:
 	[[nodiscard]]
 	TWeakObjectPtr<AMedkit> GetClosestMedkit() const;
 	
-	[[nodiscard]]
-	FKnownHouse_MartensTuur *GetClosestHouse();
+	UFUNCTION(BlueprintCallable)
+	AHouse *GetClosestHouse();
 	
 	[[nodiscard]]
 	TWeakObjectPtr<AFood> GetClosestFood() const;

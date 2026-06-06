@@ -2,11 +2,12 @@
 #include "Village/House/House.h"
 #include "FKnownHouse_MartensTuur.generated.h"
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FKnownHouse_MartensTuur
 {
 	GENERATED_BODY()
 	
+	UPROPERTY(BlueprintReadOnly)
 	FHouseBounds Bounds;
 	
 	[[nodiscard]]
