@@ -117,6 +117,11 @@ class USteeringBehavior_FollowPath_MartensTuur : public USteeringBehavior_Seek_M
 	UPROPERTY()
 	FSteeringBehaviorTarget_MartensTuur LastTarget{};
 	
+	UPROPERTY()
+	TArray<FVector> CurrentPath{};
+	
+	FVector *CurrentVec{};
+	
 public:
 	virtual FSteeringOutput_MartensTuur CalculateOutput(float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent) override;
 };

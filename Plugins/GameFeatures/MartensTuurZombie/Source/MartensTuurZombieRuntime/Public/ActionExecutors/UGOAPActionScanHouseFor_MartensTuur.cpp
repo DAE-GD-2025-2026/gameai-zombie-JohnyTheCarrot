@@ -66,7 +66,7 @@ void UGOAPActionScanHouseFor_MartensTuur::OnFinish()
 	UE_LOG(LogTemp, Warning, TEXT("Marking house as checked"));
 	auto const HouseDeref = *House;
 	// CachedStudentPerceptor->UncheckedHouses.Remove(HouseDeref);
-	CachedStudentPerceptor->CheckedHouses.Add(HouseDeref);
+	// CachedStudentPerceptor->CheckedHouses.Add(HouseDeref);
 	House = nullptr;
 }
 

@@ -44,7 +44,7 @@ public:
 	TMap<TWeakObjectPtr<ABaseZombie>, FVector> LastSeenZombiePos{};
 	
 	UPROPERTY(BlueprintReadOnly)
-	TArray<FKnownHouse_MartensTuur> CheckedHouses{};
+	TArray<AHouse*> CheckedHouses{};
 	
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AHouse*> UncheckedHouses{};
@@ -64,6 +64,8 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AMedkit*> KnownMedkits{};
+	
+	void MarkChecked(AHouse *House);
 	
 	[[nodiscard]]
 	TWeakObjectPtr<AWeapon> GetClosestWeapon() const;

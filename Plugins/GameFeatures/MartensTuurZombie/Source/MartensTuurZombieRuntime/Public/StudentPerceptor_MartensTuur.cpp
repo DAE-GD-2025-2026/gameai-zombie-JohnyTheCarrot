@@ -18,6 +18,12 @@ void UStudentPerceptor_MartensTuur::MarkHouseChecked(AHouse* House)
 {
 }
 
+void UStudentPerceptor_MartensTuur::MarkChecked(AHouse* House)
+{
+	UncheckedHouses.Remove(House);
+	CheckedHouses.Add(House);
+}
+
 // TODO: get closest has too many variants, reduce repetition!
 TWeakObjectPtr<AWeapon> UStudentPerceptor_MartensTuur::GetClosestWeapon() const
 {
@@ -113,18 +119,17 @@ void UStudentPerceptor_MartensTuur::OnPerceptionUpdated(AActor* Actor, FAIStimul
 
 	if (AHouse *House = Cast<AHouse>(Actor))
 	{
-		FKnownHouse_MartensTuur const KnownHouse{.Bounds = House->GetBounds()};
 		if (UncheckedHouses.Find(House) != INDEX_NONE) return;
-		if (CheckedHouses.Find(KnownHouse) != INDEX_NONE) return;
+		if (CheckedHouses.Find(House) != INDEX_NONE) return;
 		
 		GEngine->AddOnScreenDebugMessage(7, 5.f, FColor::Yellow, 
 		FString::Printf(TEXT("Saw House!!!!!")));
 		UncheckedHouses.Add(House);
 		
-		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin - FVector{KnownHouse.Bounds.Extent.X, 0.f, 0.f});
-		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin + FVector{KnownHouse.Bounds.Extent.X, 0.f, 0.f});
-		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin - FVector{0.f, KnownHouse.Bounds.Extent.Y, 0.f});
-		PlacesToCheckForHouse.Add(KnownHouse.Bounds.Origin + FVector{0.f, KnownHouse.Bounds.Extent.Y, 0.f});
+		PlacesToCheckForHouse.Add(House->GetBounds().Origin - FVector{House->GetBounds().Extent.X, 0.f, 0.f});
+		PlacesToCheckForHouse.Add(House->GetBounds().Origin + FVector{House->GetBounds().Extent.X, 0.f, 0.f});
+		PlacesToCheckForHouse.Add(House->GetBounds().Origin - FVector{0.f, House->GetBounds().Extent.Y, 0.f});
+		PlacesToCheckForHouse.Add(House->GetBounds().Origin + FVector{0.f, House->GetBounds().Extent.Y, 0.f});
 	}
 	else if (ABaseZombie *Zombie = Cast<ABaseZombie>(Actor))
 	{

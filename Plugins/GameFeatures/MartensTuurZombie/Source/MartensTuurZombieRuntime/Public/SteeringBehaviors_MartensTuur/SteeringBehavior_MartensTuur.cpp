@@ -49,10 +49,44 @@ FSteeringOutput_MartensTuur USteeringBehavior_FollowPath_MartensTuur::CalculateO
 {
 	if (LastTarget != Target)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("New target"), Target.TargetLocation.X, Target.TargetLocation.Y);
 		LastTarget = Target;
+		CurrentPath = Agent->CalculatePath(Get3DVec(Target.TargetLocation));
+		for (auto const Vec : CurrentPath)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("New path vec: %f, %f"), Vec.X, Vec.Y);
+		}
+		if (CurrentPath.IsEmpty())
+			CurrentVec = nullptr;
+		else
+			CurrentVec = &CurrentPath[0];
 	}
 	
-	return Super::CalculateOutput(DeltaT, Target, Agent);
+	if (CurrentVec == nullptr)
+	{
+		Finish();
+		return FSteeringOutput_MartensTuur{};
+	}
+	
+	FSteeringBehaviorTarget_MartensTuur PathTarget{};
+	PathTarget.TargetLocation = Get2DVec(*CurrentVec);
+	
+	UE_LOG(LogTemp, Warning, TEXT("vec: %f, %f"), CurrentVec->X, CurrentVec->Y);
+	auto const Output = Super::CalculateOutput(DeltaT, PathTarget, Agent);
+	if (Super::CheckIfDone(Output, DeltaT, PathTarget, Agent))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("done for now!"));
+		if (&*CurrentPath.end() == CurrentVec)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("done"));
+			Finish();
+			return Output;
+		}
+		
+		UE_LOG(LogTemp, Warning, TEXT("next vec"));
+		++CurrentVec;
+	}
+	return Output;
 }
 
 FSteeringOutput_MartensTuur USteeringBehavior_Wander_MartensTuur::CalculateOutput(float DeltaT,

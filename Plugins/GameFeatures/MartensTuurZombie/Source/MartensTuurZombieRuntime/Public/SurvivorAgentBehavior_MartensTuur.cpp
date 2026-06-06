@@ -30,7 +30,6 @@ void USurvivorAgentBehavior_MartensTuur::TickComponent(float DeltaTime, enum ELe
 	{
 		auto const MoveDir = Get3DVec(Output.Direction.GetSafeNormal());
 		FVector const Movement{MoveDir * FloatingPawnMovement->GetMaxSpeed()};
-		UE_LOG(LogTemp, Warning, TEXT("%f, %f"), Movement.X, Movement.Y);
 		Pawn->AddMovementInput(Movement, Output.SpeedScale);
 	
 		if (Output.FaceDirection)
