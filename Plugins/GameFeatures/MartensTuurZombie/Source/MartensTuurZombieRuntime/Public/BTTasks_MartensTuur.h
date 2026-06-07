@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BehaviorTree/BTTaskNode.h"
-#include "BTTasks.generated.h"
+#include "BTTasks_MartensTuur.generated.h"
 
 UCLASS(BlueprintType)
 class UBTMarkHouseExplored : public UBTTaskNode
