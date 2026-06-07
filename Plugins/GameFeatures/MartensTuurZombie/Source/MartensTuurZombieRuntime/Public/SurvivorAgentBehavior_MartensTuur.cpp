@@ -205,7 +205,28 @@ void USurvivorAgentBehavior_MartensTuur::UpdateBlackboard(UBlackboardComponent* 
 			? ClosestPistol
 			: ClosestShotgun;
 		if (ClosestOfTwo != nullptr)
+		{
 			Blackboard->SetValueAsObject(WantedItem, ClosestOfTwo);
+			return;
+		}
+	}
+	if (!ContainsItemType(EItemType::Food))
+	{
+		auto const ClosestFood = GetClosestItemOfType(EItemType::Food);
+		if (ClosestFood != nullptr)
+		{
+			Blackboard->SetValueAsObject(WantedItem, ClosestFood);
+			return;
+		}
+	}
+	if (!ContainsItemType(EItemType::Medkit))
+	{
+		auto const ClosestMedkit = GetClosestItemOfType(EItemType::Medkit);
+		if (ClosestMedkit != nullptr)
+		{
+			Blackboard->SetValueAsObject(WantedItem, ClosestMedkit);
+			return;
+		}
 	}
 	
 	auto const CurrentWantedItem = Blackboard->GetValueAsObject(WantedItem);
