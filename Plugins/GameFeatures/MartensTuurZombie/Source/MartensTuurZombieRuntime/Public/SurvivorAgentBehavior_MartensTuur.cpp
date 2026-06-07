@@ -64,6 +64,18 @@ ABaseItem* USurvivorAgentBehavior_MartensTuur::GetClosestItemOfType(EItemType Ty
 	return Closest.Get();
 }
 
+void USurvivorAgentBehavior_MartensTuur::UseItem(int Idx) const
+{
+	auto const *Item = InventoryComp->GetInventory()[Idx];
+	if (Item == nullptr) return;
+	
+	InventoryComp->UseItem(Idx);
+	if (Item->GetValue() == 0)
+	{
+		InventoryComp->RemoveItem(Idx);
+	}
+}
+
 USurvivorAgentBehavior_MartensTuur::USurvivorAgentBehavior_MartensTuur()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -173,7 +185,22 @@ void USurvivorAgentBehavior_MartensTuur::Shoot()
 	
 	if (GunIdx == -1) return;
 	
-	InventoryComp->UseItem(GunIdx);
+	UseItem(GunIdx);
+}
+
+float USurvivorAgentBehavior_MartensTuur::GetSafeEnemyDistance() const
+{
+	if (ContainsItemType(EItemType::Pistol))
+	{
+		return 500.f;
+	}
+	
+	if (ContainsItemType(EItemType::Shotgun))
+	{
+		return 200.f;
+	}
+	
+	return 3000.f;
 }
 
 void USurvivorAgentBehavior_MartensTuur::InformAboutHouse(AHouse* House)

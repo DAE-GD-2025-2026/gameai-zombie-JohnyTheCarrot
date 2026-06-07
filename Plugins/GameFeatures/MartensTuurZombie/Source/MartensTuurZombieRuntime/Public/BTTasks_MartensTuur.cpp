@@ -127,7 +127,7 @@ void UBTCombat_MartensTuur::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 			ClosestZombieDist = Dist;
 			ClosestZombie = Zombie;
 		}
-		if (Dist > 300.f)
+		if (Dist > AgentBehavior->GetSafeEnemyDistance())
 		{
 			auto const SeekOutput = Seek->CalculateOutput(DeltaSeconds, Target, Pawn);
 			FinalDir += SeekOutput.Direction;

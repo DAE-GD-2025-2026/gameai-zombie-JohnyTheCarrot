@@ -41,6 +41,8 @@ class USurvivorAgentBehavior_MartensTuur : public UActorComponent
 	[[nodiscard]]
 	ABaseItem *GetClosestItemOfType(EItemType Type) const;
 	
+	void UseItem(int Idx) const;
+	
 public:
 	USurvivorAgentBehavior_MartensTuur();
 	
@@ -55,6 +57,9 @@ public:
 	                          Scale);
 	
 	void Shoot();
+	
+	[[nodiscard]]
+	float GetSafeEnemyDistance() const;
 	
 	[[nodiscard]]
 	TArray<TWeakObjectPtr<ABaseZombie>> const &GetKnownZombies() const
