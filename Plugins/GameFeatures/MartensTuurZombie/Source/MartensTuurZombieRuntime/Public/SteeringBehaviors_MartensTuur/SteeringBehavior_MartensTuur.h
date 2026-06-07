@@ -10,6 +10,9 @@ struct FSteeringBehaviorTarget_MartensTuur
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector2D TargetLocation{FVector2D::ZeroVector};
 	
+	UPROPERTY()
+	FVector2D Velocity{FVector2D::ZeroVector};
+	
 	bool operator==(FSteeringBehaviorTarget_MartensTuur const &Other) const
 	{
 		return TargetLocation == Other.TargetLocation;
@@ -33,7 +36,7 @@ struct FSteeringOutput_MartensTuur
 	TOptional<UE::Math::TRotator<double>> FacingTowards{NullOpt};
 	
 	UPROPERTY(BlueprintReadOnly)
-	float SpeedScale{1.f};
+	float BlendWeight{1.f};
 	
 	UPROPERTY(BlueprintReadOnly)
 	bool FaceDirection{false};
@@ -159,7 +162,7 @@ public:
 };
 
 UCLASS(BlueprintType)
-class USteeringBehavior_Flee_MartensTuur : public USteeringBehavior_MartensTuur
+class USteeringBehavior_Flee_MartensTuur : public USteeringBehavior_Seek_MartensTuur
 {
 	GENERATED_BODY()
 
@@ -212,7 +215,9 @@ public:
 	 * @return False if duplicate key, true if inserted
 	 */
 	UFUNCTION(BlueprintCallable)
-	bool AddBehavior(FWeightedBehavior_MartensTuur NewBehavior, bool bIsFinishAuthority);
+	bool AddBehavior(FWeightedBehavior_MartensTuur NewBehavior, bool bIsFinishAuthority = false);
+	
+	void SetWeight(FName Key, float NewWeight);
 	
 	template<typename TBehavior>
 	FWeightedBehavior_MartensTuur &GetOrAddBehavior(FName Key, float BlendWeight = 1.f)
@@ -240,6 +245,8 @@ class USteeringBehavior_Face_MartensTuur : public USteeringBehavior_MartensTuur
 	GENERATED_BODY()
 
 public:
+	virtual bool CheckIfDone(FSteeringOutput_MartensTuur const& Output, float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent) const override;
+	
 	virtual FSteeringOutput_MartensTuur CalculateOutput(float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent) override;
 };
 

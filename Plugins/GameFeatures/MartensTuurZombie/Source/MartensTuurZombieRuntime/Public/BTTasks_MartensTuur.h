@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SurvivorAgentBehavior_MartensTuur.h"
 #include "BehaviorTree/BTTaskNode.h"
 #include "BTTasks_MartensTuur.generated.h"
 
@@ -55,4 +56,38 @@ public:
 	FBlackboardKeySelector ItemKey;
 	
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+};
+
+UCLASS(BlueprintType)
+class UBTCombat_MartensTuur : public UBTTaskNode
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	ASurvivorPawn *Pawn;
+	
+	UPROPERTY()
+	TWeakObjectPtr<USurvivorAgentBehavior_MartensTuur> AgentBehavior;
+	
+	UPROPERTY()
+	TObjectPtr<USteeringBehavior_Flee_MartensTuur> Flee;
+	
+	UPROPERTY()
+	TObjectPtr<USteeringBehavior_Seek_MartensTuur> Seek;
+	
+	UPROPERTY()
+	TObjectPtr<USteeringBehavior_Face_MartensTuur> Face;
+	
+	UPROPERTY()
+	float SecondsSinceShot{};
+	
+	UPROPERTY()
+	TObjectPtr<USteeringBehavior_Blended_MartensTuur> CombatBehavior;
+
+public:
+	UBTCombat_MartensTuur();
+	
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	
+	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 };

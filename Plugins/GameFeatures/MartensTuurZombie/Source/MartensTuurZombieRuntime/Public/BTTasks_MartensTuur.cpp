@@ -68,3 +68,105 @@ EBTNodeResult::Type UBTGetItem::ExecuteTask(UBehaviorTreeComponent& OwnerComp, u
 		? EBTNodeResult::Succeeded
 		: EBTNodeResult::Failed;
 }
+
+UBTCombat_MartensTuur::UBTCombat_MartensTuur()
+{
+	NodeName = TEXT("Combat");
+	bNotifyTick = true;
+}
+
+FName const CombatKeepDistance{"Keep Distance"};
+
+EBTNodeResult::Type UBTCombat_MartensTuur::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	if (AgentBehavior == nullptr)
+	{
+		Pawn = Cast<ASurvivorPawn>(OwnerComp.GetAIOwner()->GetPawn());
+		AgentBehavior = Pawn->GetComponentByClass<USurvivorAgentBehavior_MartensTuur>();
+		check(AgentBehavior != nullptr);
+	}
+	if (Seek == nullptr)
+	{
+		Seek = NewObject<USteeringBehavior_Seek_MartensTuur>();
+		Flee = NewObject<USteeringBehavior_Flee_MartensTuur>();
+		Face = NewObject<USteeringBehavior_Face_MartensTuur>();
+	}
+	
+	return EBTNodeResult::InProgress;
+}
+
+void UBTCombat_MartensTuur::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+{
+	check(AgentBehavior != nullptr);
+	
+	FVector2D FinalDir{};
+	float TotalWeight{0.f};
+	TWeakObjectPtr<ABaseZombie> ClosestZombie;
+	float ClosestZombieDist{100000000000000.f};
+	
+	auto const &Zombies = AgentBehavior->GetKnownZombies();
+	if (Zombies.IsEmpty())
+	{
+		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+		return;
+	}
+	for (TWeakObjectPtr<ABaseZombie> const& ZombiePtr : Zombies)
+	{
+		if (!ZombiePtr.IsValid())
+			continue;
+
+		ABaseZombie* Zombie = ZombiePtr.Get();
+
+		FSteeringBehaviorTarget_MartensTuur Target{};
+		Target.TargetLocation = Get2DVec(Zombie->GetActorLocation());
+		Target.Velocity = Get2DVec(Zombie->GetVelocity());
+		
+		auto const Dist = Zombie->GetHorizontalDistanceTo(Pawn);
+		if (ClosestZombieDist > Dist)
+		{
+			ClosestZombieDist = Dist;
+			ClosestZombie = Zombie;
+		}
+		if (Dist > 300.f)
+		{
+			auto const SeekOutput = Seek->CalculateOutput(DeltaSeconds, Target, Pawn);
+			FinalDir += SeekOutput.Direction;
+			TotalWeight += 1.f;
+		} else
+		{
+			auto const FleeOutput = Flee->CalculateOutput(DeltaSeconds, Target, Pawn);
+			FinalDir += FleeOutput.Direction;
+			TotalWeight += 1.f;
+		}
+	}
+	
+	FVector const ResultMovement{Get3DVec(FinalDir / TotalWeight)};
+	
+	if (!ResultMovement.IsNearlyZero())
+	{
+		Pawn->AddMovementInput(ResultMovement);
+	}
+	
+	FSteeringBehaviorTarget_MartensTuur Target{};
+	Target.TargetLocation = Get2DVec(ClosestZombie->GetActorLocation());
+	AgentBehavior->TickSteeringBehavior(Face, Target, DeltaSeconds, 1.f);
+	
+	SecondsSinceShot += DeltaSeconds;
+	if (Face->IsDone() && SecondsSinceShot >= 0.5f)
+	{
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(Pawn);
+		Params.AddIgnoredActor(ClosestZombie.Get());
+		
+		// obstacle check
+		FHitResult HitResult{}; 
+		bool bObstacleInTheWay = GetWorld()->LineTraceSingleByChannel(HitResult, Pawn->GetActorLocation(), ClosestZombie->GetActorLocation(), 
+			ECC_Pawn, Params);
+		
+		if (!bObstacleInTheWay)
+		{
+			SecondsSinceShot = 0.f;
+			AgentBehavior->Shoot();
+		}
+	}
+}

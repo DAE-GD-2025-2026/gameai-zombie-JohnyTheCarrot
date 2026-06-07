@@ -38,7 +38,7 @@ FSteeringOutput_MartensTuur USteeringBehavior_Arrive_MartensTuur::CalculateOutpu
 	auto Output = Super::CalculateOutput(DeltaT, Target, Agent);
 	if (auto const Dist = FVector2D::Distance(Get2DVec(Agent->GetActorLocation()), Target.TargetLocation); Dist <= SlowAtDistance)
 	{
-		Output.SpeedScale = Dist / SlowAtDistance;
+		Output.BlendWeight = Dist / SlowAtDistance;
 	}
 	
 	return Output;
@@ -108,9 +108,10 @@ FSteeringOutput_MartensTuur USteeringBehavior_Wander_MartensTuur::CalculateOutpu
 FSteeringOutput_MartensTuur USteeringBehavior_Flee_MartensTuur::CalculateOutput(float DeltaT,
 	FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent)
 {
-	auto Output = Super::CalculateOutput(DeltaT, Target, Agent);
+	FSteeringOutput_MartensTuur Output{Super::CalculateOutput(DeltaT, Target, Agent)};
 	
 	Output.Direction = -Output.Direction;
+	Output.BlendWeight = 1.f / FVector::Distance(Agent->GetActorLocation(), Get3DVec(Target.TargetLocation));
 	
 	return Output;
 }
@@ -165,6 +166,14 @@ bool USteeringBehavior_Blended_MartensTuur::AddBehavior(FWeightedBehavior_Marten
 	return true;
 }
 
+void USteeringBehavior_Blended_MartensTuur::SetWeight(FName Key, float NewWeight)
+{
+	if (auto *const Existing = FindBehaviorByKey(Key); Existing != nullptr)
+	{
+		Existing->Weight = NewWeight;
+	}
+}
+
 FSteeringOutput_MartensTuur USteeringBehavior_Blended_MartensTuur::CalculateOutput(float DeltaT,
                                                                                    FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent)
 {
@@ -191,16 +200,16 @@ FSteeringOutput_MartensTuur USteeringBehavior_Blended_MartensTuur::CalculateOutp
 				= Output.FacingTowards.Get(FRotator::ZeroRotator)
 				+ BehaviorOutput.FacingTowards.GetValue() * Weight;
 		}
-		Output.SpeedScale += BehaviorOutput.SpeedScale * Weight;
+		Output.BlendWeight += BehaviorOutput.BlendWeight * Weight;
 		TotalWeight += Weight;
-		UE_LOG(LogTemp, Warning, TEXT("Behavior: %s, dir {%f, %f} * %f"), *_Name.ToString(), Output.Direction.X, Output.Direction.Y, Output.SpeedScale);
+		UE_LOG(LogTemp, Warning, TEXT("Behavior: %s, dir {%f, %f} * %f"), *_Name.ToString(), BehaviorOutput.Direction.X, BehaviorOutput.Direction.Y, BehaviorOutput.BlendWeight);
 		
 		// todo: face direction?
 	}
 	
 	if (TotalWeight > KINDA_SMALL_NUMBER)
 	{
-		Output.SpeedScale /= TotalWeight;
+		Output.BlendWeight /= TotalWeight;
 	}
 	Output.Direction = Output.Direction.GetSafeNormal();
 	if (Output.FacingTowards.IsSet())
@@ -209,8 +218,20 @@ FSteeringOutput_MartensTuur USteeringBehavior_Blended_MartensTuur::CalculateOutp
 	return Output;
 }
 
+bool USteeringBehavior_Face_MartensTuur::CheckIfDone(FSteeringOutput_MartensTuur const& Output, float DeltaT,
+	FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent) const
+{
+	auto const CurrentRot = Agent->GetActorRotation();
+	
+	auto const Angle = FMath::FindDeltaAngleDegrees(
+		CurrentRot.Yaw,
+		Output.FacingTowards.GetValue().Yaw
+	);	
+	return Angle <= 5.f;
+}
+
 FSteeringOutput_MartensTuur USteeringBehavior_Face_MartensTuur::CalculateOutput(float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target,
-	ASurvivorPawn const* Agent)
+                                                                                ASurvivorPawn const* Agent)
 {
 	FSteeringOutput_MartensTuur Output;
 	auto Dir = Get3DVec(Target.TargetLocation) - Agent->GetActorLocation();

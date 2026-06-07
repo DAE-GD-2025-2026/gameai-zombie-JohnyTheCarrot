@@ -5,6 +5,7 @@
 #include "SteeringBehaviors_MartensTuur/SteeringBehavior_MartensTuur.h"
 #include "Survivor/SurvivorPawn.h"
 #include "Village/House/House.h"
+#include "Zombies/BaseZombie.h"
 #include "SurvivorAgentBehavior_MartensTuur.generated.h"
 
 UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent))
@@ -20,6 +21,7 @@ class USurvivorAgentBehavior_MartensTuur : public UActorComponent
 	TArray<TWeakObjectPtr<AHouse>> UncheckedHouses;
 	TArray<TWeakObjectPtr<AHouse>> CheckedHouses;
 	TArray<TWeakObjectPtr<ABaseItem>> KnownItems;
+	TArray<TWeakObjectPtr<ABaseZombie>> KnownZombies;
 	
 	TWeakObjectPtr<UHealthComponent> HealthComp{};
 	
@@ -49,25 +51,24 @@ public:
 	
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FSteeringBehaviorTarget_MartensTuur SteerTarget{};
+	void TickSteeringBehavior(USteeringBehavior_MartensTuur *Behavior, FSteeringBehaviorTarget_MartensTuur const &Target, float DeltaTime, float
+	                          Scale);
 	
-	UFUNCTION(BlueprintCallable)
-	USteeringBehavior_MartensTuur *GetSteeringBehavior() const;
+	void Shoot();
+	
+	[[nodiscard]]
+	TArray<TWeakObjectPtr<ABaseZombie>> const &GetKnownZombies() const
+	{
+		return KnownZombies;
+	}
 	
 	void InformAboutHouse(AHouse *House);
 	void InformAboutItem(ABaseItem *Food);
 	
 	void MarkChecked(AHouse *House);
 	
+	void HasSeenZombie(ABaseZombie *Zombie);
+	
 	UFUNCTION(BlueprintCallable)
 	void UpdateBlackboard(UBlackboardComponent *Blackboard) const;
-	
-	// A singular behavior being active is a blended behavior with one element
-	// This set-up allows for run-time adding of more behaviors
-	UPROPERTY()
-	USteeringBehavior_MartensTuur *CurrentSteeringBehavior;
-	
-	UFUNCTION(BlueprintCallable)
-	void SetCurrentSteeringBehavior(USteeringBehavior_MartensTuur *SteeringBehavior);
 };

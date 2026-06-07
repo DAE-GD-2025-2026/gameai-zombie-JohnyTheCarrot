@@ -102,8 +102,17 @@ void USurvivorAgentBehavior_MartensTuur::BeginPlay()
 void USurvivorAgentBehavior_MartensTuur::TickComponent(float DeltaTime, enum ELevelTick TickType,
                                                        FActorComponentTickFunction* ThisTickFunction)
 {
-	if (CurrentSteeringBehavior == nullptr) return;
-	
+	KnownZombies.RemoveAll([](TWeakObjectPtr<ABaseZombie> const& Zombie)
+	{
+		return !Zombie.IsValid();
+	});
+}
+
+void USurvivorAgentBehavior_MartensTuur::TickSteeringBehavior(USteeringBehavior_MartensTuur *Behavior,
+                                                              FSteeringBehaviorTarget_MartensTuur const &Target,
+                                                              float DeltaTime, float Scale)
+{
+	check(Behavior != nullptr);
 	auto Pawn = Cast<APawn>(GetOwner());
 	if (TargetRotator.IsSet())
 	{
@@ -129,19 +138,19 @@ void USurvivorAgentBehavior_MartensTuur::TickComponent(float DeltaTime, enum ELe
 		Pawn->SetActorRotation(NewRot);
 	}
 	
-	auto const Output = CurrentSteeringBehavior->CalculateOutput(DeltaTime, SteerTarget, Cast<ASurvivorPawn>(GetOwner()));
-	auto const bIsDone = CurrentSteeringBehavior->CheckIfDone(Output, DeltaTime, SteerTarget, GetOwner());
+	auto const Output = Behavior->CalculateOutput(DeltaTime, Target, Cast<ASurvivorPawn>(GetOwner()));
+	auto const bIsDone = Behavior->CheckIfDone(Output, DeltaTime, Target, GetOwner());
 	if (bIsDone)
 	{
-		CurrentSteeringBehavior->Finish();
-		return;
+		Behavior->Finish();
 	}
 	
 	if (Output.Direction.SquaredLength() > KINDA_SMALL_NUMBER)
 	{
 		auto const MoveDir = Get3DVec(Output.Direction.GetSafeNormal());
-		FVector const Movement{MoveDir * FloatingPawnMovement->GetMaxSpeed()};
-		Pawn->AddMovementInput(Movement, Output.SpeedScale);
+		FVector const Movement{MoveDir * FloatingPawnMovement->GetMaxSpeed() * Scale};
+		UE_LOG(LogTemp, Warning, TEXT("Moving %f, %f * %f"), Movement.X, Movement.Y, Scale);
+		Pawn->AddMovementInput(Movement);
 	}
 	
 	if (Output.FacingTowards.IsSet())
@@ -150,9 +159,21 @@ void USurvivorAgentBehavior_MartensTuur::TickComponent(float DeltaTime, enum ELe
 	}
 }
 
-USteeringBehavior_MartensTuur* USurvivorAgentBehavior_MartensTuur::GetSteeringBehavior() const
+void USurvivorAgentBehavior_MartensTuur::Shoot()
 {
-	return CurrentSteeringBehavior;
+	auto const &Inv = InventoryComp->GetInventory();
+	int GunIdx{-1};
+	for (int Idx = 0; Idx < Inv.Num(); ++Idx)
+	{
+		if (Inv[Idx] != nullptr && (Inv[Idx]->GetItemType() == EItemType::Pistol || Inv[Idx]->GetItemType() == EItemType::Shotgun))
+		{
+			GunIdx = Idx;
+		}
+	}
+	
+	if (GunIdx == -1) return;
+	
+	InventoryComp->UseItem(GunIdx);
 }
 
 void USurvivorAgentBehavior_MartensTuur::InformAboutHouse(AHouse* House)
@@ -177,6 +198,14 @@ void USurvivorAgentBehavior_MartensTuur::MarkChecked(AHouse* House)
 	CheckedHouses.Add(House);
 }
 
+void USurvivorAgentBehavior_MartensTuur::HasSeenZombie(ABaseZombie* Zombie)
+{
+	if (!KnownZombies.Contains(Zombie))
+	{
+		KnownZombies.Add(Zombie);
+	}
+}
+
 void USurvivorAgentBehavior_MartensTuur::UpdateBlackboard(UBlackboardComponent* Blackboard) const
 {
 	if (Blackboard == nullptr)
@@ -192,8 +221,14 @@ void USurvivorAgentBehavior_MartensTuur::UpdateBlackboard(UBlackboardComponent* 
 	else
 		Blackboard->ClearValue(FName{"NewHouse"});
 	
+	Blackboard->SetValueAsBool(FName{"SeesZombies"}, !KnownZombies.IsEmpty());
+	
 	FName const WantedItem{"WantedItem"};
 	auto const HasGun = ContainsItemType(EItemType::Pistol) || ContainsItemType(EItemType::Shotgun);
+	Blackboard->SetValueAsBool(FName{"HasGun"}, HasGun);
+	auto const HasFood = !ContainsItemType(EItemType::Food);
+	Blackboard->SetValueAsBool(FName{"HasFood"}, HasFood);
+	
 	if (!HasGun)
 	{
 		auto const ClosestPistol = GetClosestItemOfType(EItemType::Pistol);
@@ -210,10 +245,9 @@ void USurvivorAgentBehavior_MartensTuur::UpdateBlackboard(UBlackboardComponent* 
 			return;
 		}
 	}
-	if (!ContainsItemType(EItemType::Food))
+	if (!HasFood)
 	{
-		auto const ClosestFood = GetClosestItemOfType(EItemType::Food);
-		if (ClosestFood != nullptr)
+		if (auto const ClosestFood = GetClosestItemOfType(EItemType::Food); ClosestFood != nullptr)
 		{
 			Blackboard->SetValueAsObject(WantedItem, ClosestFood);
 			return;
@@ -231,11 +265,4 @@ void USurvivorAgentBehavior_MartensTuur::UpdateBlackboard(UBlackboardComponent* 
 	
 	auto const CurrentWantedItem = Blackboard->GetValueAsObject(WantedItem);
 	if (!KnownItems.Contains(CurrentWantedItem)) Blackboard->ClearValue(WantedItem);
-}
-
-void USurvivorAgentBehavior_MartensTuur::SetCurrentSteeringBehavior(USteeringBehavior_MartensTuur* SteeringBehavior)
-{
-	check(SteeringBehavior);
-	CurrentSteeringBehavior = SteeringBehavior;
-	CurrentSteeringBehavior->Reset();
 }

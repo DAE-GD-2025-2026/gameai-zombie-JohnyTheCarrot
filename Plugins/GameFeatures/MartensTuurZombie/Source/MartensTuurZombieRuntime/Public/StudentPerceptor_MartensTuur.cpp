@@ -122,8 +122,7 @@ void UStudentPerceptor_MartensTuur::OnPerceptionUpdated(AActor* Actor, FAIStimul
 	}
 	else if (ABaseZombie *Zombie = Cast<ABaseZombie>(Actor))
 	{
-		auto &LastPos = LastSeenZombiePos.FindOrAdd(Zombie, Zombie->GetActorLocation());
-		LastPos = Zombie->GetActorLocation();
+		BehaviorComp->HasSeenZombie(Zombie);
 	}
 	else if (ABaseItem *Item = Cast<ABaseItem>(Actor))
 	{
