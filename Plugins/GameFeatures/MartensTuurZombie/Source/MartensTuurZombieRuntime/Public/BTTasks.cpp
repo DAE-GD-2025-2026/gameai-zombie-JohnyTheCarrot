@@ -40,12 +40,17 @@ EBTNodeResult::Type UBTFindNewWanderPos::ExecuteTask(UBehaviorTreeComponent& Own
 	FVector2D const AngleVec{FMath::Cos(Angle), FMath::Sin(Angle)};
 	
 	FVector2D const TargetPos{Get2DVec(Agent->GetActorLocation()) + Get2DVec(Agent->GetActorForwardVector()) * Distance + AngleVec * Radius};
-	UE_LOG(LogTemp, Warning, TEXT("Target: %f, %f"), TargetPos.X, TargetPos.Y)
+	UE_LOG(LogTemp, Warning, TEXT("new wander target: %f, %f"), TargetPos.X, TargetPos.Y)
 	
 	auto *Blackboard = Controller->GetBlackboardComponent();
 	Blackboard->SetValueAsVector(WanderKey.SelectedKeyName, Get3DVec(TargetPos));
 	
 	return EBTNodeResult::Succeeded;
+}
+
+UBTGetItem::UBTGetItem()
+{
+	NodeName = TEXT("Get item");
 }
 
 EBTNodeResult::Type UBTGetItem::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

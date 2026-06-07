@@ -11,6 +11,8 @@ class USurvivorAgentBehavior_MartensTuur : public UActorComponent
 	UPROPERTY()
 	UFloatingPawnMovement *FloatingPawnMovement;
 	
+	TOptional<UE::Math::TRotator<double>> TargetRotator;
+	
 public:
 	USurvivorAgentBehavior_MartensTuur();
 	
@@ -21,7 +23,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FSteeringBehaviorTarget_MartensTuur SteerTarget{};
 	
-	UPROPERTY(BlueprintReadOnly)
+	UFUNCTION(BlueprintCallable)
+	USteeringBehavior_MartensTuur *GetSteeringBehavior() const;
+	
+	// A singular behavior being active is a blended behavior with one element
+	// This set-up allows for run-time adding of more behaviors
+	UPROPERTY()
 	USteeringBehavior_MartensTuur *CurrentSteeringBehavior;
 	
 	UFUNCTION(BlueprintCallable)

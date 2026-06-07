@@ -49,6 +49,8 @@ class UBTGetItem : public UBTTaskNode
 	GENERATED_BODY()
 
 public:
+	UBTGetItem();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FBlackboardKeySelector ItemKey;
 	

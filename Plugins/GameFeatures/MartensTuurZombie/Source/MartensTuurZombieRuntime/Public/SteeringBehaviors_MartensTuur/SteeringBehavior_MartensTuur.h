@@ -30,6 +30,8 @@ struct FSteeringOutput_MartensTuur
 	UPROPERTY(BlueprintReadOnly)
 	FVector2D Direction{FVector::ZeroVector};
 	
+	TOptional<UE::Math::TRotator<double>> FacingTowards{NullOpt};
+	
 	UPROPERTY(BlueprintReadOnly)
 	float SpeedScale{1.f};
 	
@@ -45,6 +47,9 @@ class USteeringBehavior_MartensTuur : public UObject
 	UPROPERTY()
 	bool bIsDone{false};
 
+protected:
+	virtual void OnReset() {};
+	
 public:
 	using UObject::UObject;
 	
@@ -55,9 +60,15 @@ public:
 		bIsDone = true;
 	}
 	
+	void SetNotDone()
+	{
+		bIsDone = false;
+	}
+	
 	void Reset()
 	{
 		bIsDone = false;
+		OnReset();
 	}
 	
 	UFUNCTION(BlueprintCallable)
@@ -120,7 +131,7 @@ class USteeringBehavior_FollowPath_MartensTuur : public USteeringBehavior_Seek_M
 	UPROPERTY()
 	TArray<FVector> CurrentPath{};
 	
-	FVector *CurrentVec{};
+	TOptional<int> CurrentVecIdx{NullOpt};
 	
 public:
 	virtual FSteeringOutput_MartensTuur CalculateOutput(float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent) override;
@@ -162,10 +173,16 @@ struct FWeightedBehavior_MartensTuur final
 	GENERATED_BODY()
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FName Key;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	float Weight;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<USteeringBehavior_MartensTuur> Behavior;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsEnabled{true};
 };
 
 UCLASS(BlueprintType)
@@ -173,9 +190,72 @@ class USteeringBehavior_Blended_MartensTuur : public USteeringBehavior_MartensTu
 {
 	GENERATED_BODY()
 
-public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TArray<FWeightedBehavior_MartensTuur> Behaviors;
+	
+	TOptional<int> FinishAuthorityIdx{NullOpt};
+	
+protected:
+	virtual void OnReset() override;
+	
+public:
+	UFUNCTION(BlueprintCallable)
+	TArray<FWeightedBehavior_MartensTuur> const &GetBehaviors() const;
+	
+	[[nodiscard]]
+	FWeightedBehavior_MartensTuur* FindBehaviorByKey(FName Key);
+	
+	virtual bool CheckIfDone(FSteeringOutput_MartensTuur const& Output, float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent) const override;
+	
+	/**
+	 * @param NewBehavior The behavior to add.
+	 * @param bIsFinishAuthority Whether this Behavior is the one who determines whether the BlendedSteering behavior is done.
+	 * @return False if duplicate key, true if inserted
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool AddBehavior(FWeightedBehavior_MartensTuur NewBehavior, bool bIsFinishAuthority);
+	
+	template<typename TBehavior>
+	FWeightedBehavior_MartensTuur &GetOrAddBehavior(FName Key, float BlendWeight = 1.f)
+	{
+		if (auto *Existing = FindBehaviorByKey(Key))
+			return *Existing;
+		
+		FWeightedBehavior_MartensTuur Behavior{};
+		Behavior.Key = Key;
+		Behavior.Weight = BlendWeight;
+		Behavior.Behavior = NewObject<TBehavior>();
+		check(AddBehavior(Behavior, false));
+		
+		auto const NewlyAdded = FindBehaviorByKey(Key);
+		check(NewlyAdded != nullptr);
+		return *NewlyAdded;
+	}
+	
+	virtual FSteeringOutput_MartensTuur CalculateOutput(float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent) override;
+};
+
+UCLASS(BlueprintType)
+class USteeringBehavior_Face_MartensTuur : public USteeringBehavior_MartensTuur
+{
+	GENERATED_BODY()
+
+public:
+	virtual FSteeringOutput_MartensTuur CalculateOutput(float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent) override;
+};
+
+UCLASS(BlueprintType)
+class USteeringBehavior_TurnAround_MartensTuur : public USteeringBehavior_MartensTuur
+{
+	GENERATED_BODY()
+
+public:
+	TOptional<FVector> InitiallyFacingDirection{NullOpt};
+	UE::Math::TRotator<double> TargetRotator{};
+	
+	virtual void OnReset() override
+	{
+		InitiallyFacingDirection.Reset();
+	}
 	
 	virtual FSteeringOutput_MartensTuur CalculateOutput(float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent) override;
 };
