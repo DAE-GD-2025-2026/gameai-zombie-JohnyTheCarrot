@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "FKnownHouse_MartensTuur.h"
-#include "GOAP.h"
-#include "GOAPPlanning.h"
 #include "Common/HealthComponent.h"
 #include "Common/StaminaComponent.h"
 #include "Components/ActorComponent.h"
