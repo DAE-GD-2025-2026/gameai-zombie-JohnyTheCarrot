@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FKnownHouse_MartensTuur.h"
+#include "SurvivorAgentBehavior_MartensTuur.h"
 #include "Common/HealthComponent.h"
 #include "Common/StaminaComponent.h"
 #include "Components/ActorComponent.h"
@@ -29,14 +30,8 @@ public:
 	
 	void RefreshSurvivorState() {}
 	
-	UPROPERTY(BlueprintReadOnly)
-	UHealthComponent *HealthComp{};
-	
-	UPROPERTY(BlueprintReadOnly)
-	UStaminaComponent *StaminaComp{};
-	
-	UPROPERTY(BlueprintReadOnly)
-	UInventoryComponent *InventoryComp{};
+	UPROPERTY()
+	USurvivorAgentBehavior_MartensTuur *BehaviorComp;
 	
 	UPROPERTY()
 	TMap<TWeakObjectPtr<ABaseZombie>, FVector> LastSeenZombiePos{};

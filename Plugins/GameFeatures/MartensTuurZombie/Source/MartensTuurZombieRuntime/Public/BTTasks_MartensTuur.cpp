@@ -16,11 +16,11 @@ EBTNodeResult::Type UBTMarkHouseExplored::ExecuteTask(UBehaviorTreeComponent& Ow
 {
 	auto *const Controller = OwnerComp.GetAIOwner();
 	auto Pawn = Controller->GetPawn();
-	auto *const Perceptor = Cast<ASurvivorPawn>(Pawn)->GetComponentByClass<UStudentPerceptor_MartensTuur>();
+	auto *const AgentBehavior = Cast<ASurvivorPawn>(Pawn)->GetComponentByClass<USurvivorAgentBehavior_MartensTuur>();
 	
 	auto *Blackboard = Controller->GetBlackboardComponent();
 	auto const House = Cast<AHouse>(Blackboard->GetValueAsObject(HouseKey.SelectedKeyName));
-	Perceptor->MarkChecked(House);
+	AgentBehavior->MarkChecked(House);
 	Blackboard->ClearValue(HouseKey.SelectedKeyName);
 	
 	return EBTNodeResult::Succeeded;
@@ -60,21 +60,9 @@ EBTNodeResult::Type UBTGetItem::ExecuteTask(UBehaviorTreeComponent& OwnerComp, u
 	auto *const Item = Cast<ABaseItem>(Blackboard->GetValueAsObject(ItemKey.SelectedKeyName));
 	
 	auto *const Agent = Cast<ASurvivorPawn>(Controller->GetPawn());
-	auto *const Inv = Agent->GetComponentByClass<UStudentPerceptor_MartensTuur>()->InventoryComp;
+	auto *const AgentBehavior = Agent->GetComponentByClass<USurvivorAgentBehavior_MartensTuur>();
+	auto const GrabResult = AgentBehavior->GrabItem(Item);
 	
-	auto const &InvItems = Inv->GetInventory();
-	int SlotIdx{-1};
-	for (int Idx = 0; Idx < InvItems.Num(); ++Idx)
-	{
-		if (InvItems[Idx] == nullptr)
-		{
-			SlotIdx = Idx;
-			break;
-		}
-	}
-	if (SlotIdx == -1 || SlotIdx == InvItems.Num()) return EBTNodeResult::Failed;
-	
-	auto const GrabResult = Inv->GrabItem(SlotIdx, Item);
 	if (!GrabResult) UE_LOG(LogTemp, Warning, TEXT("Couldn't grab item"));
 	return GrabResult
 		? EBTNodeResult::Succeeded

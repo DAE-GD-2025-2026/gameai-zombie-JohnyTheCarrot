@@ -102,34 +102,23 @@ void UStudentPerceptor_MartensTuur::BeginPlay()
 	check(PerceptionComp);
 	PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &UStudentPerceptor_MartensTuur::OnPerceptionUpdated);
 	
-	HealthComp = GetOwner()->GetComponentByClass<UHealthComponent>();
-	check(HealthComp);
+	BehaviorComp = GetOwner()->GetComponentByClass<USurvivorAgentBehavior_MartensTuur>();
 	
-	StaminaComp = GetOwner()->GetComponentByClass<UStaminaComponent>();
-	check(StaminaComp);
-	
-	InventoryComp = GetOwner()->GetComponentByClass<UInventoryComponent>();
-	check(InventoryComp);
 }
 
 void UStudentPerceptor_MartensTuur::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	GEngine->AddOnScreenDebugMessage(5, 1.f, FColor::Green, 
 	FString::Printf(TEXT("Saw Something!")));
+	if (BehaviorComp == nullptr)
+	{
+		BehaviorComp = GetOwner()->GetComponentByClass<USurvivorAgentBehavior_MartensTuur>();
+		check(BehaviorComp);
+	}
 
 	if (AHouse *House = Cast<AHouse>(Actor))
 	{
-		if (UncheckedHouses.Find(House) != INDEX_NONE) return;
-		if (CheckedHouses.Find(House) != INDEX_NONE) return;
-		
-		GEngine->AddOnScreenDebugMessage(7, 5.f, FColor::Yellow, 
-		FString::Printf(TEXT("Saw House!!!!!")));
-		UncheckedHouses.Add(House);
-		
-		PlacesToCheckForHouse.Add(House->GetBounds().Origin - FVector{House->GetBounds().Extent.X, 0.f, 0.f});
-		PlacesToCheckForHouse.Add(House->GetBounds().Origin + FVector{House->GetBounds().Extent.X, 0.f, 0.f});
-		PlacesToCheckForHouse.Add(House->GetBounds().Origin - FVector{0.f, House->GetBounds().Extent.Y, 0.f});
-		PlacesToCheckForHouse.Add(House->GetBounds().Origin + FVector{0.f, House->GetBounds().Extent.Y, 0.f});
+		BehaviorComp->InformAboutHouse(House);
 	}
 	else if (ABaseZombie *Zombie = Cast<ABaseZombie>(Actor))
 	{
@@ -138,75 +127,12 @@ void UStudentPerceptor_MartensTuur::OnPerceptionUpdated(AActor* Actor, FAIStimul
 	}
 	else if (ABaseItem *Item = Cast<ABaseItem>(Actor))
 	{
-		auto const Type = Item->GetItemType();
-		if (Type == EItemType::Pistol || Type == EItemType::Shotgun)
-		{
-			auto const Weapon = Cast<AWeapon>(Item);
-			if (KnownWeapons.Find(Weapon) != INDEX_NONE) return;
-			
-			KnownWeapons.Add(Weapon);
-		}
-		else if (Type == EItemType::Food)
-		{
-			if (KnownFoods.Find(Cast<AFood>(Item)) != INDEX_NONE) return;
-			
-			KnownFoods.Add(Cast<AFood>(Item));
-			return;
-		}
-		else if (Type == EItemType::Medkit)
-		{
-			auto const Medkit = Cast<AMedkit>(Item);
-			if (KnownMedkits.Find(Medkit) != INDEX_NONE) return;
-			
-			KnownMedkits.Add(Medkit);
-		}
+		BehaviorComp->InformAboutItem(Item);
 	}
 }
 
 void UStudentPerceptor_MartensTuur::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
-	auto const &Inv = InventoryComp->GetInventory();
-	
-	int NumGuns{0};
-	int NumFood{0};
-	int NumMedkits{0};
-	int NumGarbage{0};
-	for (auto *Item : Inv)
-	{
-		if (Item == nullptr) continue;
-		switch (Item->GetItemType())
-		{
-			case EItemType::Food: NumFood++; break;
-			case EItemType::Medkit: NumMedkits++; break;
-			case EItemType::Pistol:
-			case EItemType::Shotgun: NumGuns++; break;
-			case EItemType::Garbage: NumGarbage++; break;
-		}
-		KnownWeapons.Remove(Cast<AWeapon>(Item));
-		KnownMedkits.Remove(Cast<AMedkit>(Item));
-		KnownFoods.Remove(Cast<AFood>(Item));
-		DesiredItems.Remove(Cast<ABaseItem>(Item));
-	}
-	
-	if (NumGuns == 0)
-	{
-		auto const ClosestWeapon = GetClosestWeapon();
-		if (ClosestWeapon != nullptr)
-			DesiredItems.Add(ClosestWeapon.Get());
-	}
-	if (NumFood == 0)
-	{
-		auto const ClosestFood = GetClosestFood();
-		if (ClosestFood != nullptr)
-			DesiredItems.Add(ClosestFood.Get());
-	}
-	if (NumMedkits == 0)
-	{
-		auto const ClosestMedkit = GetClosestMedkit();
-		if (ClosestMedkit != nullptr)
-			DesiredItems.Add(ClosestMedkit.Get());
-	}
-	
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
