@@ -241,16 +241,39 @@ FSteeringOutput_MartensTuur USteeringBehavior_Face_MartensTuur::CalculateOutput(
 	return Output;
 }
 
-FSteeringOutput_MartensTuur USteeringBehavior_TurnAround_MartensTuur::CalculateOutput(float DeltaT,
-	FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent)
+void USteeringBehavior_FaceBack_MartensTuur::OnReset()
 {
-	if (!InitiallyFacingDirection.IsSet())
+	UE_LOG(LogTemp, Warning, TEXT("FaceBack Reset"));
+	TargetDirection.Reset();
+}
+
+bool USteeringBehavior_FaceBack_MartensTuur::CheckIfDone(FSteeringOutput_MartensTuur const& Output, float DeltaT,
+	FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent) const
+{
+	if (!TargetDirection.IsSet()) return false;
+	
+	auto const CurrentRot = Agent->GetActorRotation();
+
+	auto const Angle = FMath::FindDeltaAngleDegrees(
+		CurrentRot.Yaw,
+		TargetDirection.GetValue().Yaw
+	);	
+	return Angle <= 5.f;
+}
+
+FSteeringOutput_MartensTuur USteeringBehavior_FaceBack_MartensTuur::CalculateOutput(float DeltaT,
+                                                                                    FSteeringBehaviorTarget_MartensTuur const&, ASurvivorPawn const* Agent)
+{
+	if (!TargetDirection.IsSet())
 	{
-		InitiallyFacingDirection = FVector{Agent->GetActorForwardVector().X, Agent->GetActorForwardVector().Y, 0.f};
-		TargetRotator = (-InitiallyFacingDirection.GetValue()).Rotation();
+		auto Backward = -Agent->GetActorForwardVector();
+		Backward.Z = 0.f;
+		
+		TargetDirection = Backward.Rotation();
 	}
 	
 	FSteeringOutput_MartensTuur Output;
-	Output.FacingTowards = TargetRotator;
+	Output.FacingTowards = TargetDirection;
+	
 	return Output;
 }

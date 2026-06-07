@@ -251,18 +251,17 @@ public:
 };
 
 UCLASS(BlueprintType)
-class USteeringBehavior_TurnAround_MartensTuur : public USteeringBehavior_MartensTuur
+class USteeringBehavior_FaceBack_MartensTuur : public USteeringBehavior_Face_MartensTuur
 {
 	GENERATED_BODY()
 
-public:
-	TOptional<FVector> InitiallyFacingDirection{NullOpt};
-	UE::Math::TRotator<double> TargetRotator{};
+	UPROPERTY()
+	TOptional<FRotator> TargetDirection;
 	
-	virtual void OnReset() override
-	{
-		InitiallyFacingDirection.Reset();
-	}
+public:
+	virtual void OnReset() override;
+	
+	virtual bool CheckIfDone(FSteeringOutput_MartensTuur const& Output, float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent) const override;
 	
 	virtual FSteeringOutput_MartensTuur CalculateOutput(float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, ASurvivorPawn const* Agent) override;
 };

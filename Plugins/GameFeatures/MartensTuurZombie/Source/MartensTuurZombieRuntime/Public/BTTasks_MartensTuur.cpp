@@ -170,3 +170,38 @@ void UBTCombat_MartensTuur::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 		}
 	}
 }
+
+UBTSimpleArbitrarySteeringBehavior::UBTSimpleArbitrarySteeringBehavior()
+{
+	NodeName = TEXT("Arbitrary steering behavior");
+	bNotifyTick = true;
+}
+
+EBTNodeResult::Type UBTSimpleArbitrarySteeringBehavior::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	check(BehaviorClass != nullptr);
+	BehaviorInstance = NewObject<USteeringBehavior_MartensTuur>(this, BehaviorClass);
+	check(BehaviorInstance != nullptr);
+	
+	if (AgentBehavior == nullptr)
+	{
+		auto const Pawn = Cast<ASurvivorPawn>(OwnerComp.GetAIOwner()->GetPawn());
+		AgentBehavior = Pawn->GetComponentByClass<USurvivorAgentBehavior_MartensTuur>();
+		check(AgentBehavior != nullptr);
+	}
+	
+	return EBTNodeResult::InProgress;
+}
+
+void UBTSimpleArbitrarySteeringBehavior::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+{
+	FSteeringBehaviorTarget_MartensTuur Target{};
+	
+	AgentBehavior->TickSteeringBehavior(BehaviorInstance, Target, DeltaSeconds, 1.f);
+	
+	if (BehaviorInstance->IsDone())
+	{
+		BehaviorInstance->Reset();
+		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+	}
+}

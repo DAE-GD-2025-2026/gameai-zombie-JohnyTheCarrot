@@ -91,3 +91,25 @@ public:
 	
 	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 };
+
+UCLASS(BlueprintType)
+class UBTSimpleArbitrarySteeringBehavior : public UBTTaskNode
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	TWeakObjectPtr<USurvivorAgentBehavior_MartensTuur> AgentBehavior;
+	
+	UPROPERTY()
+	TObjectPtr<USteeringBehavior_MartensTuur> BehaviorInstance;
+
+public:
+	UBTSimpleArbitrarySteeringBehavior();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<USteeringBehavior_MartensTuur> BehaviorClass;
+	
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	
+	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+};

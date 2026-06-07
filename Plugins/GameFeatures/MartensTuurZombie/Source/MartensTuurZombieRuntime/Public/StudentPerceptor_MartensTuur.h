@@ -28,26 +28,11 @@ public:
 	// Sets default values for this component's properties
 	UStudentPerceptor_MartensTuur();
 	
-	void RefreshSurvivorState() {}
-	
 	UPROPERTY()
 	USurvivorAgentBehavior_MartensTuur *BehaviorComp;
 	
 	UPROPERTY()
 	TMap<TWeakObjectPtr<ABaseZombie>, FVector> LastSeenZombiePos{};
-	
-	UPROPERTY(BlueprintReadOnly)
-	TArray<AHouse*> CheckedHouses{};
-	
-	UPROPERTY(BlueprintReadOnly)
-	TArray<AHouse*> UncheckedHouses{};
-	
-	UFUNCTION(BlueprintCallable)
-	void MarkHouseChecked(AHouse *House);
-	
-	UPROPERTY(BlueprintReadOnly)
-	// Mostly slightly outside the walls of houses we already know of, to try to find neighbors in villages
-	TArray<FVector> PlacesToCheckForHouse{};
 	
 	UPROPERTY(BlueprintReadOnly)
 	TArray<ABaseItem*> DesiredItems{};
@@ -60,20 +45,6 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AMedkit*> KnownMedkits{};
-	
-	void MarkChecked(AHouse *House);
-	
-	[[nodiscard]]
-	TWeakObjectPtr<AWeapon> GetClosestWeapon() const;
-	
-	[[nodiscard]]
-	TWeakObjectPtr<AMedkit> GetClosestMedkit() const;
-	
-	UFUNCTION(BlueprintCallable)
-	AHouse *GetClosestHouse();
-	
-	[[nodiscard]]
-	TWeakObjectPtr<AFood> GetClosestFood() const;
 	
 	virtual void BeginPlay() override;
 
