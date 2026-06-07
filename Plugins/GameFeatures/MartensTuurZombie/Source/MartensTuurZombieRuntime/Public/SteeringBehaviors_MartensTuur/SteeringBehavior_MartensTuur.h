@@ -104,7 +104,7 @@ class USteeringBehavior_Seek_MartensTuur : public USteeringBehavior_MartensTuur
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float DoneAtDistance{50.f};
+	float DoneAtDistance{10.f};
 	
 	virtual bool CheckIfDone(FSteeringOutput_MartensTuur const &Output, float DeltaT, FSteeringBehaviorTarget_MartensTuur const& Target, AActor const* Agent) const override;
 	

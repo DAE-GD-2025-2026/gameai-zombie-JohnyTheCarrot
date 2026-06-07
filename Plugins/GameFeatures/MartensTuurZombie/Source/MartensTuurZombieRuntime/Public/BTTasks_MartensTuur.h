@@ -26,16 +26,16 @@ class UBTFindNewWanderPos : public UBTTaskNode
 public:
 	UBTFindNewWanderPos();
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MinAngle{-45.f};
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxAngle{+45.f};
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Distance{200.f};
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Radius{150.f};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
