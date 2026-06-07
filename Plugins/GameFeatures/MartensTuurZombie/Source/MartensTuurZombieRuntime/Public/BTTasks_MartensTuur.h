@@ -45,12 +45,12 @@ public:
 };
 
 UCLASS(BlueprintType)
-class UBTGetItem : public UBTTaskNode
+class UBTGetDesiredItem : public UBTTaskNode
 {
 	GENERATED_BODY()
 
 public:
-	UBTGetItem();
+	UBTGetDesiredItem();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FBlackboardKeySelector ItemKey;

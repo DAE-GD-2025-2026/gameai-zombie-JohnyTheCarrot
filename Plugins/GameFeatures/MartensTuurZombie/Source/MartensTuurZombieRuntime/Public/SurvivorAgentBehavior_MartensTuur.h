@@ -33,7 +33,10 @@ class USurvivorAgentBehavior_MartensTuur : public UActorComponent
 	TOptional<int> GetFreeInvSlot() const;
 	
 	[[nodiscard]]
-	bool ContainsItemType(EItemType Type) const;
+	bool InvContainsItemType(EItemType Type) const;
+	
+	[[nodiscard]]
+	bool AwareOfItemType(EItemType Type) const;
 	
 	[[nodiscard]]
 	AHouse *GetClosestHouse() const;
@@ -43,11 +46,29 @@ class USurvivorAgentBehavior_MartensTuur : public UActorComponent
 	
 	void UseItem(int Idx) const;
 	
+	[[nodiscard]]
+	bool IsHungry() const;
+	
+	[[nodiscard]]
+	bool IsHurt() const;
+	
+	[[nodiscard]]
+	float ScoreItemInterest(ABaseItem *Item, float *ProximityScore) const;
+	
+	UPROPERTY()
+	TWeakObjectPtr<ABaseItem> DesiredItem;
+	
+	UPROPERTY()
+	int DesiredItemSlot{};
+	
 public:
 	USurvivorAgentBehavior_MartensTuur();
 	
 	[[nodiscard]]
 	bool GrabItem(ABaseItem *Item);
+	
+	[[nodiscard]]
+	bool GrabDesiredItem();
 	
 	virtual void BeginPlay() override;
 	

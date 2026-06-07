@@ -48,20 +48,18 @@ EBTNodeResult::Type UBTFindNewWanderPos::ExecuteTask(UBehaviorTreeComponent& Own
 	return EBTNodeResult::Succeeded;
 }
 
-UBTGetItem::UBTGetItem()
+UBTGetDesiredItem::UBTGetDesiredItem()
 {
 	NodeName = TEXT("Get item");
 }
 
-EBTNodeResult::Type UBTGetItem::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTGetDesiredItem::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	auto *const Controller = OwnerComp.GetAIOwner();
-	auto *Blackboard = Controller->GetBlackboardComponent();
-	auto *const Item = Cast<ABaseItem>(Blackboard->GetValueAsObject(ItemKey.SelectedKeyName));
 	
 	auto *const Agent = Cast<ASurvivorPawn>(Controller->GetPawn());
 	auto *const AgentBehavior = Agent->GetComponentByClass<USurvivorAgentBehavior_MartensTuur>();
-	auto const GrabResult = AgentBehavior->GrabItem(Item);
+	auto const GrabResult = AgentBehavior->GrabDesiredItem();
 	
 	if (!GrabResult) UE_LOG(LogTemp, Warning, TEXT("Couldn't grab item"));
 	return GrabResult

@@ -15,9 +15,18 @@ TOptional<int> USurvivorAgentBehavior_MartensTuur::GetFreeInvSlot() const
 	return NullOpt;
 }
 
-bool USurvivorAgentBehavior_MartensTuur::ContainsItemType(EItemType Type) const
+bool USurvivorAgentBehavior_MartensTuur::InvContainsItemType(EItemType Type) const
 {
 	return InventoryComp->GetInventory().ContainsByPredicate([Type](ABaseItem *Item)
+	{
+		if (Item == nullptr) return false;
+		return Item->GetItemType() == Type;
+	});
+}
+
+bool USurvivorAgentBehavior_MartensTuur::AwareOfItemType(EItemType Type) const
+{
+	return KnownItems.ContainsByPredicate([Type](TWeakObjectPtr<ABaseItem> const &Item)
 	{
 		if (Item == nullptr) return false;
 		return Item->GetItemType() == Type;
@@ -76,6 +85,64 @@ void USurvivorAgentBehavior_MartensTuur::UseItem(int Idx) const
 	}
 }
 
+bool USurvivorAgentBehavior_MartensTuur::IsHungry() const
+{
+	return StaminaComp->GetCurrentStamina() / StaminaComp->GetMaxStamina() <= 0.5;
+}
+
+bool USurvivorAgentBehavior_MartensTuur::IsHurt() const
+{
+	return HealthComp->GetHealth() < HealthComp->GetMaxHealth();
+}
+
+float USurvivorAgentBehavior_MartensTuur::ScoreItemInterest(ABaseItem* Item, float *ProximityScore) const
+{
+	if (Item == nullptr) return TNumericLimits<float>::Lowest();
+	float Score = 0.f;
+	
+	switch (Item->GetItemType()) {
+	case EItemType::Shotgun:
+	case EItemType::Pistol:
+		{
+			auto const Gun = Cast<AWeapon>(Item);
+			Score += Item->GetValue(); // ammo
+			Score += Gun->GetDamage() * 1.5f;
+			
+			bool const HasGuns = InvContainsItemType(EItemType::Pistol) || InvContainsItemType(EItemType::Shotgun);
+			if (!HasGuns)
+				Score *= 2.f;
+		}
+		break;
+	case EItemType::Food:
+		{
+			bool const HasFood = InvContainsItemType(EItemType::Food);
+			Score += Item->GetValue();
+			if (HasFood || IsHungry())
+				Score *= 2.f;
+		}
+		break;
+	case EItemType::Medkit:
+		{
+			Score = 1.5f;
+			bool const HasMedkit = InvContainsItemType(EItemType::Medkit);
+			Score += Item->GetValue();
+			if (HasMedkit || IsHurt())
+				Score *= 2.f;
+		}
+		break;
+	case EItemType::Garbage:
+		Score = 0.01f;
+		break;
+	}
+	
+	if (ProximityScore != nullptr && !Item->IsHidden())
+	{
+		*ProximityScore = 1.f / GetOwner()->GetSquaredHorizontalDistanceTo(Item);
+	}
+	
+	return Score;
+}
+
 USurvivorAgentBehavior_MartensTuur::USurvivorAgentBehavior_MartensTuur()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -90,6 +157,21 @@ bool USurvivorAgentBehavior_MartensTuur::GrabItem(ABaseItem* Item)
 		if (GrabWasSuccess) KnownItems.Remove(Item);
 		
 		return GrabWasSuccess;
+	}
+	
+	return false;
+}
+
+bool USurvivorAgentBehavior_MartensTuur::GrabDesiredItem()
+{
+	if (!DesiredItem.IsValid()) return false;
+	
+	InventoryComp->RemoveItem(DesiredItemSlot);
+	if (InventoryComp->GrabItem(DesiredItemSlot, DesiredItem.Get()))
+	{
+		KnownItems.Remove(DesiredItem);
+		DesiredItem.Reset();
+		return true;
 	}
 	
 	return false;
@@ -118,6 +200,45 @@ void USurvivorAgentBehavior_MartensTuur::TickComponent(float DeltaTime, enum ELe
 	{
 		return !Zombie.IsValid();
 	});
+	
+	if (IsHungry())
+	{
+		auto const &InventoryItems = InventoryComp->GetInventory();
+		for (int Idx = 0; Idx < InventoryItems.Num(); ++Idx)
+		{
+			auto const &InventoryItem = InventoryItems[Idx];
+			if (InventoryItem == nullptr) continue;
+			if (InventoryItem->GetItemType() == EItemType::Food)
+			{
+				UseItem(Idx);
+			}
+		}
+	}
+	
+	if (!DesiredItem.IsValid())
+	{
+		auto const &Inv = InventoryComp->GetInventory();
+		float BestProximityScore{};
+		for (auto const &KnownItem : KnownItems)
+		{
+			for (auto InvIdx = 0; InvIdx < Inv.Num(); ++InvIdx)
+			{
+				auto const InvItem = Inv[InvIdx];
+				
+				float ProximityScore{};
+				if (ScoreItemInterest(KnownItem.Get(), &ProximityScore) > ScoreItemInterest(InvItem, nullptr))
+				{
+					if (ProximityScore >= BestProximityScore)
+					{
+						DesiredItem = KnownItem;
+						BestProximityScore = ProximityScore;
+						DesiredItemSlot = InvIdx;
+					}
+				}
+			}
+		}
+	} else if (DesiredItem->IsHidden())
+		DesiredItem.Reset();
 }
 
 void USurvivorAgentBehavior_MartensTuur::TickSteeringBehavior(USteeringBehavior_MartensTuur *Behavior,
@@ -190,12 +311,12 @@ void USurvivorAgentBehavior_MartensTuur::Shoot()
 
 float USurvivorAgentBehavior_MartensTuur::GetSafeEnemyDistance() const
 {
-	if (ContainsItemType(EItemType::Pistol))
+	if (InvContainsItemType(EItemType::Pistol))
 	{
 		return 500.f;
 	}
 	
-	if (ContainsItemType(EItemType::Shotgun))
+	if (InvContainsItemType(EItemType::Shotgun))
 	{
 		return 200.f;
 	}
@@ -251,45 +372,46 @@ void USurvivorAgentBehavior_MartensTuur::UpdateBlackboard(UBlackboardComponent* 
 	Blackboard->SetValueAsBool(FName{"SeesZombies"}, !KnownZombies.IsEmpty());
 	
 	FName const WantedItem{"WantedItem"};
-	auto const HasGun = ContainsItemType(EItemType::Pistol) || ContainsItemType(EItemType::Shotgun);
+	auto const HasGun = InvContainsItemType(EItemType::Pistol) || InvContainsItemType(EItemType::Shotgun);
 	Blackboard->SetValueAsBool(FName{"HasGun"}, HasGun);
-	auto const HasFood = !ContainsItemType(EItemType::Food);
+	auto const HasFood = !InvContainsItemType(EItemType::Food);
 	Blackboard->SetValueAsBool(FName{"HasFood"}, HasFood);
 	
-	if (!HasGun)
-	{
-		auto const ClosestPistol = GetClosestItemOfType(EItemType::Pistol);
-		auto const PistolDistance = ClosestPistol != nullptr ? ClosestPistol->GetDistanceTo(GetOwner()) : MAX_int32;
-		auto const ClosestShotgun = GetClosestItemOfType(EItemType::Shotgun);
-		auto const ShotgunDistance = ClosestShotgun != nullptr ? ClosestShotgun->GetDistanceTo(GetOwner()) : MAX_int32;
-		
-		auto const ClosestOfTwo = PistolDistance < ShotgunDistance
-			? ClosestPistol
-			: ClosestShotgun;
-		if (ClosestOfTwo != nullptr)
-		{
-			Blackboard->SetValueAsObject(WantedItem, ClosestOfTwo);
-			return;
-		}
-	}
-	if (!HasFood)
-	{
-		if (auto const ClosestFood = GetClosestItemOfType(EItemType::Food); ClosestFood != nullptr)
-		{
-			Blackboard->SetValueAsObject(WantedItem, ClosestFood);
-			return;
-		}
-	}
-	if (!ContainsItemType(EItemType::Medkit))
-	{
-		auto const ClosestMedkit = GetClosestItemOfType(EItemType::Medkit);
-		if (ClosestMedkit != nullptr)
-		{
-			Blackboard->SetValueAsObject(WantedItem, ClosestMedkit);
-			return;
-		}
-	}
-	
-	auto const CurrentWantedItem = Blackboard->GetValueAsObject(WantedItem);
-	if (!KnownItems.Contains(CurrentWantedItem)) Blackboard->ClearValue(WantedItem);
+	// if (!HasGun)
+	// {
+	// 	auto const ClosestPistol = GetClosestItemOfType(EItemType::Pistol);
+	// 	auto const PistolDistance = ClosestPistol != nullptr ? ClosestPistol->GetDistanceTo(GetOwner()) : MAX_int32;
+	// 	auto const ClosestShotgun = GetClosestItemOfType(EItemType::Shotgun);
+	// 	auto const ShotgunDistance = ClosestShotgun != nullptr ? ClosestShotgun->GetDistanceTo(GetOwner()) : MAX_int32;
+	// 	
+	// 	auto const ClosestOfTwo = PistolDistance < ShotgunDistance
+	// 		? ClosestPistol
+	// 		: ClosestShotgun;
+	// 	if (ClosestOfTwo != nullptr)
+	// 	{
+	// 		Blackboard->SetValueAsObject(WantedItem, ClosestOfTwo);
+	// 		return;
+	// 	}
+	// }
+	// if (!HasFood)
+	// {
+	// 	if (auto const ClosestFood = GetClosestItemOfType(EItemType::Food); ClosestFood != nullptr)
+	// 	{
+	// 		Blackboard->SetValueAsObject(WantedItem, ClosestFood);
+	// 		return;
+	// 	}
+	// }
+	// if (!InvContainsItemType(EItemType::Medkit))
+	// {
+	// 	auto const ClosestMedkit = GetClosestItemOfType(EItemType::Medkit);
+	// 	if (ClosestMedkit != nullptr)
+	// 	{
+	// 		Blackboard->SetValueAsObject(WantedItem, ClosestMedkit);
+	// 		return;
+	// 	}
+	// }
+	if (DesiredItem.Get() != nullptr || KnownItems.Contains(DesiredItem))
+		Blackboard->SetValueAsObject(WantedItem, DesiredItem.Get());
+	else
+		Blackboard->ClearValue(WantedItem);
 }
