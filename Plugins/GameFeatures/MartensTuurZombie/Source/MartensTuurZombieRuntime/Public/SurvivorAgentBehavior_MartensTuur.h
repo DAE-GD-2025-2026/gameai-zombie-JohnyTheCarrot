@@ -61,6 +61,11 @@ class USurvivorAgentBehavior_MartensTuur : public UActorComponent
 	UPROPERTY()
 	int DesiredItemSlot{};
 	
+	UPROPERTY()
+	int LastHealthAmount{};
+	
+	mutable bool bWasSurpriseAttacked{false};
+	
 public:
 	USurvivorAgentBehavior_MartensTuur();
 	

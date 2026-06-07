@@ -194,6 +194,13 @@ EBTNodeResult::Type UBTSimpleArbitrarySteeringBehavior::ExecuteTask(UBehaviorTre
 void UBTSimpleArbitrarySteeringBehavior::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	FSteeringBehaviorTarget_MartensTuur Target{};
+	if (VectorKey.IsSet())
+	{
+		auto *const Controller = OwnerComp.GetAIOwner();
+	
+		auto const *const Blackboard = Controller->GetBlackboardComponent();
+		Target.TargetLocation = Get2DVec(Blackboard->GetValueAsVector(VectorKey.SelectedKeyName));
+	}
 	
 	AgentBehavior->TickSteeringBehavior(BehaviorInstance, Target, DeltaSeconds, 1.f);
 	
